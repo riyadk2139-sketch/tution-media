@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.tutionmedia.app",
+    "sha256_cert_fingerprints": [
+      "FE:B7:F5:C0:C1:8C:E5:9F:56:3E:66:CF:A7:08:94:98:E0:38:F1:D2:72:A5:02:17:ED:67:B8:C4:E0:40:68:D3"
+    ]
+  }
+}]
