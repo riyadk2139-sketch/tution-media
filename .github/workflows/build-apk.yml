@@ -12,17 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'temurin'
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install platform + build tools
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - name: Install SDK components
+        run: sdkmanager "platforms;android-33" "build-tools;33.0.2"
 
       - name: Write local.properties
         working-directory: android
@@ -31,30 +31,40 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Decode keystore
-        working-directory: android/app
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
-
-      - name: Build release APK
+      - name: Build release APK (unsigned)
         working-directory: android
-        env:
-          KEYSTORE_PATH:     release.keystore
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon --stacktrace --info 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}
+        run: |
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
 
-      - name: Upload build log on failure
-        if: failure()
+      - name: Upload build log (always)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: /tmp/build.log
+          path: android/build.log
           retention-days: 7
 
-      - name: Upload APK
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Sign APK with apksigner
+        run: |
+          APKSIGNER="$ANDROID_HOME/build-tools/33.0.2/apksigner"
+          UNSIGNED="android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          SIGNED="tution-media-v1.0.0-release.apk"
+          $APKSIGNER sign \
+            --ks release.keystore \
+            --ks-key-alias "${{ secrets.KEY_ALIAS }}" \
+            --ks-pass "pass:${{ secrets.KEYSTORE_PASSWORD }}" \
+            --key-pass "pass:${{ secrets.KEY_PASSWORD }}" \
+            --out "$SIGNED" \
+            "$UNSIGNED"
+          $APKSIGNER verify "$SIGNED" && echo "✓ APK verified"
+
+      - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
           name: tution-media-release-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: tution-media-v1.0.0-release.apk
           retention-days: 30
