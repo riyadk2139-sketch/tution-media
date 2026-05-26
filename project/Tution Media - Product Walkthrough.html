@@ -1,0 +1,1768 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tution Media · Product walkthrough</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    /* Page (light) defaults */
+    --ink:        #0F0F0F;
+    --paper:      #F5F5F5;
+    --primary:    #FFC83D;
+    --primary-deep:#b88500;
+    --accent:     #2F8F5E;
+    --text:       #0F0F0F;
+    --text-2:     rgba(15,15,15,0.70);
+    --text-3:     rgba(15,15,15,0.48);
+    --surface:    #F5F5F5;
+    --surface-2:  #ECECEC;
+    --line:       rgba(15,15,15,0.08);
+    --line-2:     rgba(15,15,15,0.14);
+    /* Phone-internal (dark) — used inside .phone scope */
+    --p-ink:      #0F0F0F;
+    --p-ink-2:    #181818;
+    --p-surface:  #1E1E1E;
+    --p-line:     rgba(255,255,255,0.08);
+    --p-text:     #FFFFFF;
+    --p-text-2:   #C8C8C8;
+    --p-text-3:   #888888;
+    --p-accent:   #7ED9A8;
+  }
+  html, body { margin: 0; padding: 0; background: #E8E6E1; color: var(--text);
+    font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+
+  deck-stage section {
+    width: 1920px; height: 1080px; background: #FFFFFF; color: var(--ink);
+    overflow: hidden; position: relative; padding: 64px 96px; box-sizing: border-box;
+    display: flex; flex-direction: column;
+  }
+
+  /* Re-scope dark values inside the phone so all `var(--text-2)` etc inside
+     phone markup resolve to the dark UI palette while the page stays light. */
+  .phone {
+    --ink:      var(--p-ink);
+    --ink-2:    var(--p-ink-2);
+    --surface:  var(--p-surface);
+    --line:     var(--p-line);
+    --line-2:   rgba(255,255,255,0.14);
+    --text:     var(--p-text);
+    --text-2:   var(--p-text-2);
+    --text-3:   var(--p-text-3);
+    --accent:   var(--p-accent);
+    color: var(--p-text);
+  }
+
+  /* Page header */
+  .header { display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono'; font-size: 13px; letter-spacing: 0.16em;
+    color: var(--text-3); text-transform: uppercase;
+    padding-bottom: 20px; border-bottom: 1px solid var(--line);
+    flex-shrink: 0; }
+  .header .wm { display: flex; align-items: center; gap: 10px; }
+  .header .wm .dot { width: 8px; height: 8px; border-radius: 4px; background: var(--primary); }
+  .header .wm b { color: var(--text); font-family: 'DM Sans'; font-weight: 700; letter-spacing: 0; text-transform: none; font-size: 15px; }
+
+  h1, h2 { margin: 0; font-family: 'DM Sans'; font-weight: 600; letter-spacing: -0.02em; }
+  .eyebrow { font-family: 'DM Mono'; font-size: 14px; letter-spacing: 0.2em; color: var(--text-3); text-transform: uppercase; }
+  .title-xl { font-size: 140px; line-height: 0.92; font-weight: 700; letter-spacing: -0.045em; }
+  .title-lg { font-size: 96px; line-height: 0.96; font-weight: 700; letter-spacing: -0.035em; }
+  .h2 { font-size: 64px; line-height: 1; font-weight: 600; letter-spacing: -0.025em; }
+  .lede { font-size: 22px; line-height: 1.5; color: var(--text-2); font-weight: 400; }
+  .meta { font-family: 'DM Mono'; font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); }
+
+  em.y { color: var(--primary-deep); font-style: normal; font-weight: 600; }
+  .yellow { color: var(--primary-deep); }
+
+  .card { background: var(--surface); border: 1px solid var(--line);
+    border-radius: 26px; padding: 32px;
+    box-shadow: 0 12px 32px rgba(15,15,15,0.04), 0 1px 2px rgba(15,15,15,0.04); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px;
+    border-radius: 999px; background: rgba(15,15,15,0.05); border: 1px solid var(--line-2);
+    font-family: 'DM Mono'; font-size: 12px; letter-spacing: 0.06em; color: var(--text-2); text-transform: uppercase; }
+  .pill.y { background: var(--primary); color: var(--ink); border-color: transparent; font-weight: 600; }
+  .pill.a { background: rgba(47,143,94,0.12); color: var(--accent); border-color: transparent; }
+
+  .footer { display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono'; font-size: 12px; letter-spacing: 0.14em;
+    color: var(--text-3); text-transform: uppercase; padding-top: 18px;
+    border-top: 1px solid var(--line); flex-shrink: 0; }
+
+  .body { flex: 1; display: flex; gap: 60px; padding: 40px 0; min-height: 0; }
+
+  /* Phone canvas */
+  .phone-col { flex: 0 0 460px; display: flex; align-items: center; justify-content: center; }
+  .phone { width: 420px; height: 860px; background: var(--ink); border-radius: 44px;
+    border: 9px solid #2a2a2a; box-shadow: 0 50px 100px rgba(0,0,0,0.5); overflow: hidden;
+    display: flex; flex-direction: column; box-sizing: border-box; position: relative; }
+  .phone .statusbar { height: 36px; padding: 0 22px; display:flex; align-items:center; justify-content:space-between;
+    font-family: 'DM Mono'; font-size: 12px; color: var(--text-2); flex-shrink: 0; }
+  .phone .notch { position: absolute; left: 50%; top: 12px; transform: translateX(-50%);
+    width: 18px; height: 18px; border-radius: 9px; background: #050505; }
+  .phone .body-area { flex: 1; padding: 0 18px; overflow: hidden; display: flex; flex-direction: column; gap: 12px; }
+  .phone .pill-bar { height: 22px; display:flex; align-items:center; justify-content:center; flex-shrink: 0; padding-bottom: 4px; }
+  .phone .pill-bar .gp { width: 100px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.4); }
+  .phone .tabs { display: flex; gap: 0; padding: 8px 0; border-top: 1px solid var(--line); justify-content: space-between; flex-shrink: 0; }
+  .phone .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 500; color: var(--text-3); font-family: 'DM Sans'; }
+  .phone .tab.on { color: var(--primary); }
+  .phone .tab .ico { width: 22px; height: 22px; }
+
+  .ico { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Content side */
+  .content { flex: 1; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .feat { display: grid; grid-template-columns: 28px 1fr; gap: 18px; align-items: flex-start; }
+  .feat .b { width: 8px; height: 8px; border-radius: 4px; background: var(--primary); margin-top: 12px; }
+  .feat .t { font-size: 22px; font-weight: 500; letter-spacing: -0.005em; }
+  .feat .d { font-size: 16px; color: var(--text-2); margin-top: 6px; line-height: 1.5; }
+
+  /* Mini cards inside phone */
+  .pcard { background: var(--ink-2); border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+    display: flex; flex-direction: column; gap: 10px; }
+  .ptag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px;
+    font-family: 'DM Mono'; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .ptag.y { background: var(--primary); color: var(--ink); font-weight: 600; }
+  .ptag.a { background: rgba(126,217,168,0.18); color: var(--accent); }
+  .ptag.n { background: rgba(255,255,255,0.06); color: var(--text-2); }
+
+  /* Highlight stat block */
+  .stat-row { display: flex; gap: 36px; align-items: flex-end; }
+  .stat-row .v { font-size: 84px; font-weight: 700; line-height: 0.9; letter-spacing: -0.03em; font-feature-settings: "tnum"; }
+  .stat-row .l { font-family: 'DM Mono'; font-size: 12px; letter-spacing: 0.12em; color: var(--text-3); text-transform: uppercase; margin-top: 8px; }
+
+  /* Light-bg variant for cover & close — slightly tinted off-white for variety */
+  .light-bg { background: var(--paper); color: var(--ink); }
+
+  /* Mosaic grid for overview slide */
+  .mosaic { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; flex: 1; }
+  .mosaic .cell { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px;
+    display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .mosaic .cell .n { font-family: 'DM Mono'; font-size: 11px; color: var(--primary); letter-spacing: 0.12em; }
+  .mosaic .cell .t { font-size: 18px; font-weight: 600; letter-spacing: -0.005em; }
+  .mosaic .cell .d { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+
+</style>
+</head>
+<body>
+
+<script type="application/json" id="speaker-notes">
+[
+"Welcome to the Tution Media product walkthrough. We're going to go screen by screen through the tutor app — the priority side of the marketplace, since this is a supply-first launch.",
+"Easy OTP signup. No documents required to start. We mirror the bKash mental model — value before friction. The tutor can browse, profile, and apply immediately. Verification happens later, when a real job is on the line.",
+"Profile builder. Subjects, levels, curricula, service areas at neighborhood granularity, weekly availability grid, and an optional 30-second intro video. The grid is what guardians see when they shortlist.",
+"The live job feed — the spine of the app. Match score on every card, live updates, push and SMS the instant a matching job posts. One-tap apply. The verification-nudge ribbon at top gates placement, not signup.",
+"Application tracker. Tutors see the funnel — Applied, Shortlisted, Location granted, Trial booked, Confirmed. The current step is always actionable. Speed and transparency on this funnel is the tutor's #1 pain we solve.",
+"The verification ladder. Four tiers — Phone, NID, Education, Reference. Tier 0 is auto. Tier 2 is required before placement. Tier 3 unlocks premium-rate jobs. Visible badges on every application drive voluntary climbing.",
+"Demand near you. A live heatmap showing where requests are clustering and which subjects are trending. Tutors use it to expand their service areas to the highest-fill zones. Same data layer powers ops decisions.",
+"Privacy-controlled location reveal. Before approval, only a fuzzed area pin shows. On approval, the exact address and Google Maps turn-by-turn navigation unlock — for that single tutor, for that single job. Scoped and revocable.",
+"Schedule + attendance. Tutors see their week, mark attendance per class, and watch earnings accumulate. Attendance logging is the link to payment — payment protection only fires when attendance is confirmed.",
+"Masked inbox. Every chat and call routes through the platform — guardians never see the tutor's phone number, and vice versa. Anti-leakage and anti-harassment in one mechanism. System messages confirm transitions like trial booking.",
+"Reputation profile. Verified ratings, on-time percentage, retention rate, hires count, monthly earnings. Reputation accrues only on confirmed, paid, on-platform tuitions — it's the asset tutors would forfeit by going informal.",
+"Here's the full system at a glance. Ten screens, four loops: get started, find work, build trust, run the day-to-day. Every screen serves at least one of our five product principles.",
+"Three cross-cutting features make the whole thing work. Masked communication keeps everyone safe and on-platform. Auto-collected payments remove the awkward monthly ask. Verified reputation compounds — but only on-platform.",
+"That's the tutor app. Thank you — questions and feedback welcome."
+]
+</script>
+
+<deck-stage scale-to-fit="true">
+
+  <!-- ─── 1 · COVER ─────────────────────────────────────────── -->
+  <section data-screen-label="01 Cover" class="light-bg">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>Product walkthrough · Tutor app</div>
+    </div>
+
+    <div style="flex: 1; display: flex; align-items: center; gap: 80px; padding: 40px 0;">
+      <div style="flex: 1.2;">
+        <div class="eyebrow" style="margin-bottom: 28px;">Tutor app · v1.1 · 10 screens</div>
+        <h1 class="title-xl" style="color: var(--ink);">
+          The tutor app,<br>
+          <em class="y" style="color: #c79100;">screen by screen.</em>
+        </h1>
+        <p class="lede" style="margin-top: 40px; max-width: 800px; color: rgba(15,15,15,0.72);">
+          A walkthrough of every screen in the tutor side of Tution Media — what each one does,
+          and which of our five product principles it serves.
+        </p>
+        <div style="display: flex; gap: 10px; margin-top: 40px; flex-wrap: wrap;">
+          <span class="pill" style="background: var(--primary); color: var(--ink); border-color: transparent; font-weight: 600;">Android-first PWA</span>
+          <span class="pill">Dark UI · #0F0F0F</span>
+          <span class="pill">DM Sans</span>
+          <span class="pill">Bangla · English</span>
+        </div>
+      </div>
+
+      <div style="flex: 1; display: flex; justify-content: center;">
+        <div class="phone" style="transform: scale(0.95);">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 6px 18px 0;">
+            <div style="display:flex; align-items:baseline; gap: 6px; margin-top: 24px;">
+              <div style="width: 28px; height: 28px; border-radius: 8px; background: var(--primary); display:flex; align-items:center; justify-content:center; font-weight: 700; color: var(--ink);">t</div>
+              <div style="font-weight: 700; font-size: 18px;">Tution<span class="yellow">.</span>media</div>
+            </div>
+            <div class="eyebrow" style="margin-top: 56px;">For tutors · Dhaka</div>
+            <h2 style="font-size: 44px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; margin-top: 14px;">
+              Get matched in <em class="y">days,</em><br>not weeks.
+            </h2>
+            <p style="font-size: 14px; color: var(--text-2); margin-top: 18px; line-height: 1.5;">
+              Browse live tuition jobs near you. Apply with one tap. Get paid on time.
+            </p>
+            <div style="margin-top: auto; padding-bottom: 16px;">
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                <div style="background: rgba(255,255,255,0.06); padding: 10px 12px; border-radius: 8px; font-family: 'DM Mono'; font-size: 14px;">+880</div>
+                <div style="flex: 1; font-family: 'DM Mono'; font-size: 16px;">1712 048 391</div>
+              </div>
+              <div style="background: var(--primary); color: var(--ink); padding: 14px; border-radius: 999px; text-align: center; font-weight: 600; font-size: 14px;">Send code →</div>
+            </div>
+          </div>
+          <div class="pill-bar"><div class="gp" style="background: rgba(255,255,255,0.4);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Confidential · Tution Media</div><div>01 / 14</div></div>
+  </section>
+
+  <!-- ─── 2 · ONBOARDING / OTP ──────────────────────────────── -->
+  <section data-screen-label="02 Onboarding">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>02 · Onboarding · OTP signup</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 6px 22px 0;">
+            <div style="display:flex; align-items:baseline; gap: 6px; margin-top: 16px;">
+              <div style="width: 26px; height: 26px; border-radius: 7px; background: var(--primary); display:flex; align-items:center; justify-content:center; font-weight: 700; color: var(--ink); font-size: 16px;">t</div>
+              <div style="font-weight: 700; font-size: 17px;">Tution<span class="yellow">.</span>media</div>
+            </div>
+            <div style="font-family: 'DM Mono'; font-size: 10px; color: var(--text-3); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 56px;">For tutors · Dhaka</div>
+            <h2 style="font-size: 38px; line-height: 1; font-weight: 700; letter-spacing: -0.025em; margin-top: 14px;">
+              Get matched in <em class="y">days,</em><br>not weeks.
+            </h2>
+            <p style="font-size: 14px; color: var(--text-2); margin-top: 16px; line-height: 1.5;">
+              Browse live tuition jobs. Apply with one tap. Get paid on time, every time.
+            </p>
+
+            <div style="margin-top: 40px;">
+              <div style="font-family: 'DM Mono'; font-size: 10px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Phone number</div>
+              <div style="margin-top: 8px; display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px; gap: 8px;">
+                <div style="background: rgba(255,255,255,0.06); padding: 10px 12px; border-radius: 8px; font-family: 'DM Mono'; font-size: 14px;">+880</div>
+                <div style="flex: 1; font-family: 'DM Mono'; font-size: 16px; padding: 10px 0;">1712 048 391</div>
+              </div>
+              <p style="font-size: 11px; color: var(--text-3); margin-top: 12px; line-height: 1.5;">
+                No documents needed yet — verify when you're ready to be hired.
+              </p>
+            </div>
+
+            <div style="margin-top: 24px; background: var(--primary); color: var(--ink); padding: 14px; border-radius: 999px; text-align: center; font-weight: 600; font-size: 14px;">Send code →</div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 01 · Easy OTP</div>
+        <h2 class="title-lg">Signup in <em class="y">30 seconds.</em><br>No documents.</h2>
+        <p class="lede" style="max-width: 800px;">
+          We don't gate the door — we gate placement. A tutor can sign up, build a profile,
+          and browse jobs immediately. Verification happens later, when a real job is on the line and
+          conversion is highest.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Phone-only entry · OTP</div>
+              <div class="d">Mirrors the bKash mental model that every Bangladeshi already knows.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Bangla-first · English toggle</div>
+              <div class="d">Default copy is Bangla; English available with one tap. Region-appropriate from screen one.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Value before friction</div>
+              <div class="d">Tutors can browse the job feed and apply before any verification step.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Be a magnet for tutors</span>
+          <span class="pill">Principle 01</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Onboarding</div><div>02 / 14</div></div>
+  </section>
+
+  <!-- ─── 3 · PROFILE BUILDER ───────────────────────────────── -->
+  <section data-screen-label="03 Profile">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>03 · Profile builder</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="display:flex; align-items:center; gap: 12px; padding: 14px 4px 8px;">
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 14px;">←</div>
+              <div style="flex: 1;">
+                <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Step 2 of 4</div>
+                <div style="font-size: 17px; font-weight: 600; margin-top: 3px;">Build your profile</div>
+              </div>
+              <div style="font-family: 'DM Mono'; font-size: 10px; color: var(--text-3); letter-spacing: 0.1em;">SAVE</div>
+            </div>
+
+            <div style="padding: 0 4px;">
+              <div style="height: 4px; background: var(--surface); border-radius: 2px; overflow: hidden;">
+                <div style="width: 50%; height: 100%; background: var(--primary);"></div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 14px; padding: 18px 4px;">
+              <div style="width: 56px; height: 56px; border-radius: 28px; background: #c79100; color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px;">TH</div>
+              <div style="flex: 1;">
+                <div style="font-size: 18px; font-weight: 600;">Tanvir Hasan</div>
+                <div style="display: flex; gap: 6px; margin-top: 4px;">
+                  <span class="ptag n">BUET · ME · 3rd YR</span>
+                  <span class="ptag y">CGPA 3.78</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 4px;">Subjects</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px 14px;">
+              <span style="padding: 6px 12px; border-radius: 999px; background: var(--text); color: var(--ink); font-size: 11px; font-weight: 500;">✓ Physics</span>
+              <span style="padding: 6px 12px; border-radius: 999px; background: var(--text); color: var(--ink); font-size: 11px; font-weight: 500;">✓ Math</span>
+              <span style="padding: 6px 12px; border-radius: 999px; background: var(--text); color: var(--ink); font-size: 11px; font-weight: 500;">✓ Higher Math</span>
+              <span style="padding: 6px 12px; border-radius: 999px; background: var(--text); color: var(--ink); font-size: 11px; font-weight: 500;">✓ Chemistry</span>
+              <span style="padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; color: var(--text-3);">Biology</span>
+              <span style="padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; color: var(--text-3);">English</span>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 4px;">Weekly availability</div>
+            <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px;">
+              <div style="display: grid; grid-template-columns: 40px repeat(7, 1fr); gap: 3px;">
+                <div></div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">SAT</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">SUN</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">MON</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">TUE</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">WED</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">THU</div>
+                <div style="text-align: center; font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">FRI</div>
+                <!-- Rows: Morning / Aft / Eve / Night -->
+                <div style="font-size: 9px; color: var(--text-2); text-align: right; align-self: center;">AM</div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="font-size: 9px; color: var(--text-2); text-align: right; align-self: center;">PM</div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="font-size: 9px; color: var(--text-2); text-align: right; align-self: center;">EVE</div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="font-size: 9px; color: var(--text-2); text-align: right; align-self: center;">NT</div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--primary); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+                <div style="aspect-ratio: 1; background: var(--ink-2); border-radius: 3px;"></div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 14px 4px 4px;">Service areas</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px;">
+              <span class="ptag a" style="font-size: 10px; padding: 4px 9px;">📍 Dhanmondi</span>
+              <span class="ptag a" style="font-size: 10px; padding: 4px 9px;">📍 Lalmatia</span>
+              <span class="ptag a" style="font-size: 10px; padding: 4px 9px;">📍 Mohammadpur</span>
+            </div>
+          </div>
+          <div class="tabs" style="margin: 0 18px;">
+            <div class="tab on"><div class="ico">📋</div><span>Jobs</span></div>
+            <div class="tab"><div class="ico">🗺️</div><span>Demand</span></div>
+            <div class="tab"><div class="ico">📅</div><span>Schedule</span></div>
+            <div class="tab"><div class="ico">💬</div><span>Inbox</span></div>
+            <div class="tab"><div class="ico">👤</div><span>Profile</span></div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 02 · Profile builder</div>
+        <h2 class="title-lg">The <em class="y">shape</em> of a tutor.</h2>
+        <p class="lede" style="max-width: 800px;">
+          Subjects, levels, curricula, neighborhoods, and an availability grid.
+          Everything a guardian needs to shortlist with confidence — in 3 minutes flat.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Curriculum-aware</div>
+              <div class="d">National, English Version, English Medium, Cambridge, Edexcel, Madrasa — all first-class.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Neighborhood granularity</div>
+              <div class="d">Service areas are picked at thana/neighborhood level. The market is the neighborhood, not Dhaka.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Availability grid</div>
+              <div class="d">7×4 tap-to-toggle grid. Guardians see this directly when comparing tutors side-by-side.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Optional 30-sec intro video</div>
+              <div class="d">Strong trust and conversion signal. Voluntary but the rank booster.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Hyperlocal, not "Dhaka"</span>
+          <span class="pill">Principle 04</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Profile</div><div>03 / 14</div></div>
+  </section>
+
+  <!-- ─── 4 · LIVE JOB FEED ─────────────────────────────────── -->
+  <section data-screen-label="04 Feed">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>04 · Live job feed · the spine</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="padding: 14px 4px 8px;">
+              <div style="font-family: 'DM Mono'; font-size: 10px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase;">Good morning, Tanvir</div>
+              <div style="font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin-top: 4px;">12 new jobs near you</div>
+            </div>
+
+            <div style="background: rgba(255,200,61,0.08); border: 1px solid rgba(255,200,61,0.25); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+              <div style="width: 28px; height: 28px; border-radius: 7px; background: var(--primary); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;">!</div>
+              <div style="flex: 1;">
+                <div style="font-size: 12px; font-weight: 600;">1 step left to start getting hired</div>
+                <div style="font-size: 10px; color: var(--text-3); margin-top: 2px;">Education verification · ~2 min</div>
+              </div>
+              <div style="color: var(--primary);">›</div>
+            </div>
+
+            <div class="pcard">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ptag y">94% match</span>
+                <span style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.06em;">8 MIN AGO · 3 APPLIED</span>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div>
+                    <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em;">Physics + Higher Math</div>
+                    <div style="font-size: 11px; color: var(--text-2); margin-top: 2px;">HSC · National</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.01em;">৳12,000</div>
+                    <div style="font-size: 9px; color: var(--text-3); font-family: 'DM Mono'; letter-spacing: 0.08em;">/MONTH</div>
+                  </div>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; color: var(--text-2);">
+                <div>📍 Dhanmondi 27 · 1.4km</div>
+                <div>🕓 Evenings 6–9pm</div>
+                <div>📅 4 days/wk</div>
+                <div>👤 Any tutor</div>
+              </div>
+              <div style="padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 11px; color: var(--text-2);">Mr. Rahman ✓</div>
+                <div style="background: var(--primary); color: var(--ink); padding: 7px 14px; border-radius: 999px; font-size: 11px; font-weight: 600;">⚡ 1-tap apply</div>
+              </div>
+            </div>
+
+            <div class="pcard" style="opacity: 0.85;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="ptag n" style="background: rgba(255,200,61,0.14); color: var(--primary);">88% match</span>
+                <span style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.06em;">32 MIN AGO</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em;">Math + Physics</div>
+                  <div style="font-size: 11px; color: var(--text-2); margin-top: 2px;">Class 10 · English Version</div>
+                </div>
+                <div style="text-align: right;">
+                  <div style="font-size: 18px; font-weight: 700;">৳8,500</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabs" style="margin: 0 18px;">
+            <div class="tab on"><div class="ico">📋</div><span>Jobs</span></div>
+            <div class="tab"><div class="ico">🗺️</div><span>Demand</span></div>
+            <div class="tab"><div class="ico">📅</div><span>Schedule</span></div>
+            <div class="tab"><div class="ico">💬</div><span>Inbox</span></div>
+            <div class="tab"><div class="ico">👤</div><span>Profile</span></div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 03 · Live job feed</div>
+        <h2 class="title-lg">The <em class="y">spine</em><br>of the app.</h2>
+        <p class="lede" style="max-width: 800px;">
+          A live, hyperlocal feed of tuition jobs. Match score on every card. Push and SMS the
+          instant a matching job posts. Speed is the tutor's #1 pain — we solve it head-on.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Match score on every job</div>
+              <div class="d">Subject fit, commute, schedule overlap, price fit, gender preference — a single 0–100 number.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">1-tap apply</div>
+              <div class="d">No essay, no forms. The profile speaks for the tutor. Application count is visible (competition transparency).</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Verification nudge</div>
+              <div class="d">If unverified, a contextual ribbon points to the missing tier. Gated at opportunity, not signup.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Be a magnet for tutors</span>
+          <span class="pill">Kill the leakage</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Live feed</div><div>04 / 14</div></div>
+  </section>
+
+  <!-- ─── 5 · APPLICATION TRACKER ───────────────────────────── -->
+  <section data-screen-label="05 Tracker">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>05 · Application tracker</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="display:flex; align-items:center; gap: 12px; padding: 14px 4px 8px;">
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 14px;">←</div>
+              <div style="flex: 1;">
+                <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Job j-114</div>
+                <div style="font-size: 17px; font-weight: 600;">Your application</div>
+              </div>
+            </div>
+
+            <div class="pcard" style="padding: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <div style="font-size: 16px; font-weight: 700;">Physics + Higher Math</div>
+                  <div style="font-size: 11px; color: var(--text-2); margin-top: 2px;">HSC · National · Dhanmondi 27</div>
+                </div>
+                <div style="font-size: 16px; font-weight: 700;">৳12,000</div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 14px 4px 8px;">Progress</div>
+
+            <div class="pcard" style="padding: 14px;">
+              <!-- Step list -->
+              <div style="display:flex; flex-direction: column; gap: 0;">
+                <!-- Done step -->
+                <div style="display:flex; gap: 12px;">
+                  <div style="display:flex; flex-direction: column; align-items: center; width: 18px;">
+                    <div style="width: 18px; height: 18px; border-radius: 9px; background: var(--primary); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 10px;">✓</div>
+                    <div style="flex: 1; width: 2px; background: var(--primary); margin-top: 2px; min-height: 18px;"></div>
+                  </div>
+                  <div style="flex: 1; padding-bottom: 14px;">
+                    <div style="font-size: 12px; font-weight: 600;">Applied</div>
+                    <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.06em; margin-top: 2px;">8 MIN AGO</div>
+                  </div>
+                </div>
+                <!-- Current -->
+                <div style="display:flex; gap: 12px;">
+                  <div style="display:flex; flex-direction: column; align-items: center; width: 18px;">
+                    <div style="width: 18px; height: 18px; border-radius: 9px; background: var(--primary); color: var(--ink); border: 3px solid rgba(255,200,61,0.3); box-sizing: border-box;"></div>
+                    <div style="flex: 1; width: 2px; background: var(--ink-2); margin-top: 2px; min-height: 14px;"></div>
+                  </div>
+                  <div style="flex: 1; padding-bottom: 10px;">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--primary);">Shortlisted</div>
+                    <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.06em; margin-top: 2px;">TODAY · 9:14AM</div>
+                    <div style="margin-top: 8px; background: rgba(255,200,61,0.10); padding: 10px 12px; border-radius: 10px; font-size: 11px; color: var(--primary); line-height: 1.4;">
+                      Guardian wants to meet. Request their exact location.
+                      <div style="margin-top: 8px;">
+                        <span style="background: var(--primary); color: var(--ink); padding: 5px 10px; border-radius: 999px; font-size: 10px; font-weight: 700;">📍 Request location</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Pending -->
+                <div style="display:flex; gap: 12px;">
+                  <div style="display:flex; flex-direction: column; align-items: center; width: 18px;">
+                    <div style="width: 18px; height: 18px; border-radius: 9px; background: var(--ink-2); border: 1px solid var(--line);"></div>
+                    <div style="flex: 1; width: 2px; background: var(--ink-2); margin-top: 2px; min-height: 14px;"></div>
+                  </div>
+                  <div style="flex: 1; padding-bottom: 10px;">
+                    <div style="font-size: 12px; color: var(--text-3);">Location access</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap: 12px;">
+                  <div style="display:flex; flex-direction: column; align-items: center; width: 18px;">
+                    <div style="width: 18px; height: 18px; border-radius: 9px; background: var(--ink-2); border: 1px solid var(--line);"></div>
+                    <div style="flex: 1; width: 2px; background: var(--ink-2); margin-top: 2px; min-height: 14px;"></div>
+                  </div>
+                  <div style="flex: 1; padding-bottom: 10px;">
+                    <div style="font-size: 12px; color: var(--text-3);">Trial booked</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap: 12px;">
+                  <div style="display:flex; flex-direction: column; align-items: center; width: 18px;">
+                    <div style="width: 18px; height: 18px; border-radius: 9px; background: var(--ink-2); border: 1px solid var(--line);"></div>
+                  </div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 12px; color: var(--text-3);">Confirmed</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 04 · Application tracker</div>
+        <h2 class="title-lg">A funnel<br>you can <em class="y">see.</em></h2>
+        <p class="lede" style="max-width: 800px;">
+          Every application moves through five visible stages. The current step is always
+          actionable. No more guessing whether the guardian "got my message."
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Five visible stages</div>
+              <div class="d">Applied · Shortlisted · Location granted · Trial booked · Confirmed. Always know where you stand.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Always actionable</div>
+              <div class="d">The current step never sits idle — it surfaces the next concrete action (request location, accept trial).</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">All applications at a glance</div>
+              <div class="d">Below the active job, every other application in one list — state-chipped, scannable.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Be a magnet for tutors</span>
+          <span class="pill">Trust is the moat</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Tracker</div><div>05 / 14</div></div>
+  </section>
+
+  <!-- ─── 6 · VERIFICATION LADDER ───────────────────────────── -->
+  <section data-screen-label="06 Verification">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>06 · Verification · gated before placement</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="padding: 14px 4px 8px;">
+              <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Tier 2 of 4</div>
+              <div style="font-size: 17px; font-weight: 600; margin-top: 3px;">Verification</div>
+            </div>
+
+            <!-- Trust score hero -->
+            <div style="background: var(--paper); color: var(--ink); border-radius: 16px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div style="font-family: 'DM Mono'; font-size: 9px; color: rgba(15,15,15,0.55); letter-spacing: 0.16em; text-transform: uppercase;">Trust score</div>
+                <div style="font-size: 30px; font-weight: 700; letter-spacing: -0.025em; margin-top: 4px; line-height: 1;">Verified</div>
+                <div style="font-size: 11px; color: rgba(15,15,15,0.65); margin-top: 6px; max-width: 180px; line-height: 1.4;">You can be hired. Complete tier 3 to unlock premium jobs.</div>
+              </div>
+              <div style="position: relative; width: 64px; height: 64px;">
+                <svg width="64" height="64" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(15,15,15,0.1)" stroke-width="5"/>
+                  <circle cx="32" cy="32" r="26" fill="none" stroke="#FFC83D" stroke-width="5" stroke-dasharray="163" stroke-dashoffset="98" transform="rotate(-90 32 32)" stroke-linecap="round"/>
+                </svg>
+                <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;">2/4</div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 14px 4px 6px;">The trust ladder</div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <!-- Tier 0 done -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(126,217,168,0.18); color: var(--accent); display: flex; align-items: center; justify-content: center;">✓</div>
+                <div style="flex: 1;">
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Tier 0</div>
+                  <div style="font-size: 12px; font-weight: 600;">Phone</div>
+                </div>
+                <span class="ptag a">Done</span>
+              </div>
+              <!-- Tier 1 done -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 7px; background: rgba(126,217,168,0.18); color: var(--accent); display: flex; align-items: center; justify-content: center;">✓</div>
+                <div style="flex: 1;">
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Tier 1</div>
+                  <div style="font-size: 12px; font-weight: 600;">National ID · Porichoy</div>
+                </div>
+                <span class="ptag a">Done</span>
+              </div>
+              <!-- Tier 2 current -->
+              <div style="background: rgba(255,200,61,0.10); border: 1px solid rgba(255,200,61,0.3); border-radius: 12px; padding: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 28px; height: 28px; border-radius: 7px; background: var(--primary); color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+                  <div style="flex: 1;">
+                    <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--primary); letter-spacing: 0.16em; text-transform: uppercase;">Tier 2 · Gating</div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--primary);">Education</div>
+                  </div>
+                  <span class="ptag y">In progress</span>
+                </div>
+                <div style="margin-top: 10px; font-size: 11px; color: var(--text-2); line-height: 1.4;">Upload student ID and HSC certificate</div>
+              </div>
+              <!-- Tier 3 locked -->
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; opacity: 0.5;">
+                <div style="width: 28px; height: 28px; border-radius: 7px; background: var(--ink-2); display: flex; align-items: center; justify-content: center;">🔒</div>
+                <div style="flex: 1;">
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Tier 3</div>
+                  <div style="font-size: 12px; font-weight: 600;">Reference · premium</div>
+                </div>
+                <span class="ptag n">Locked</span>
+              </div>
+            </div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 05 · Verification</div>
+        <h2 class="title-lg">Open to browse.<br><em class="y">Verified to be hired.</em></h2>
+        <p class="lede" style="max-width: 800px;">
+          Four tiers, climbed at the tutor's pace. Tier 2 is the placement gate.
+          Visible badges drive voluntary climbing — no friction at the door.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Tier 0 · Phone</div>
+              <div class="d">OTP, automatic at signup.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Tier 1 · National ID (Porichoy)</div>
+              <div class="d">Identity confirmed against govt registry.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Tier 2 · Education · gating</div>
+              <div class="d">Student ID + board result. Required before any guardian can confirm a hire.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Tier 3 · Reference · premium</div>
+              <div class="d">Manual review. Unlocks ৳15k+ placements.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; align-items: center; padding: 18px 22px; background: var(--surface); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="font-size: 48px; font-weight: 700; letter-spacing: -0.03em; color: var(--primary); line-height: 1;">3.4×</div>
+          <div style="font-size: 15px; color: var(--text-2); line-height: 1.4;">
+            Verified tutors are more likely to be shortlisted.
+            Voluntary climbing, no signup friction.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Verification</div><div>06 / 14</div></div>
+  </section>
+
+  <!-- ─── 7 · DEMAND HEATMAP ────────────────────────────────── -->
+  <section data-screen-label="07 Heatmap">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>07 · Demand near you</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="padding: 14px 4px 8px;">
+              <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">This week · Dhanmondi cluster</div>
+              <div style="font-size: 24px; font-weight: 600; margin-top: 4px; letter-spacing: -0.01em;">Demand near you</div>
+            </div>
+
+            <div class="pcard" style="padding: 14px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div>
+                  <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">71</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px;">Open jobs</div>
+                </div>
+                <div>
+                  <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">14</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px;">In your areas</div>
+                </div>
+                <div>
+                  <div style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">৳8.7k</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 4px;">Median pay</div>
+                </div>
+              </div>
+              <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--primary);">
+                ⚡ Add <strong>Lalmatia</strong> to your areas for 6 more matches
+              </div>
+            </div>
+
+            <div style="position: relative; height: 220px; border-radius: 14px; overflow: hidden; background: var(--ink-2); border: 1px solid var(--line);">
+              <svg viewBox="0 0 380 220" style="width: 100%; height: 100%;">
+                <defs>
+                  <radialGradient id="hm1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.9"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="hm2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.7"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+                  <radialGradient id="hm3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.5"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+                </defs>
+                <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+                  <line x1="0" y1="60" x2="380" y2="65"/>
+                  <line x1="0" y1="130" x2="380" y2="128"/>
+                  <line x1="80" y1="0" x2="83" y2="220"/>
+                  <line x1="200" y1="0" x2="197" y2="220"/>
+                  <line x1="290" y1="0" x2="287" y2="220"/>
+                </g>
+                <circle cx="180" cy="90" r="65" fill="url(#hm1)"/>
+                <circle cx="225" cy="120" r="50" fill="url(#hm2)"/>
+                <circle cx="115" cy="85" r="45" fill="url(#hm3)"/>
+                <circle cx="100" cy="160" r="40" fill="url(#hm3)"/>
+
+                <g transform="translate(180, 90)">
+                  <circle r="3.5" fill="#FFC83D"/>
+                  <text y="-12" text-anchor="middle" font-family="DM Mono" font-size="8" letter-spacing="0.1em" fill="#fff">18</text>
+                  <text y="16" text-anchor="middle" font-family="DM Sans" font-size="9" font-weight="600" fill="#fff">Dhanmondi 27</text>
+                </g>
+                <g transform="translate(100, 160)">
+                  <circle r="6" fill="#fff" stroke="#FFC83D" stroke-width="2"/>
+                  <rect x="9" y="-6" width="28" height="13" rx="3" fill="#fff"/>
+                  <text x="23" y="3" text-anchor="middle" font-family="DM Mono" font-size="8" fill="#0F0F0F" font-weight="600">YOU</text>
+                </g>
+              </svg>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 10px 4px 4px;">Top zones</div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;">
+                <div style="font-family: 'DM Mono'; font-size: 16px; color: var(--text-3); width: 20px; text-align: center;">1</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 11px; font-weight: 600;">Dhanmondi 27 <span class="ptag y" style="font-size: 8px; padding: 1px 6px; margin-left: 4px;">HOT</span></div>
+                  <div style="font-size: 10px; color: var(--text-2); margin-top: 1px;">18 requests · Physics HSC</div>
+                </div>
+                <div style="width: 40px; height: 4px; background: var(--ink-2); border-radius: 2px;"><div style="width: 100%; height: 100%; background: var(--primary); border-radius: 2px;"></div></div>
+              </div>
+              <div style="background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 10px;">
+                <div style="font-family: 'DM Mono'; font-size: 16px; color: var(--text-3); width: 20px; text-align: center;">2</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 11px; font-weight: 600;">Dhanmondi 15</div>
+                  <div style="font-size: 10px; color: var(--text-2); margin-top: 1px;">14 requests · Math Class 10</div>
+                </div>
+                <div style="width: 40px; height: 4px; background: var(--ink-2); border-radius: 2px;"><div style="width: 82%; height: 100%; background: var(--primary); border-radius: 2px;"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="tabs" style="margin: 0 18px;">
+            <div class="tab"><div class="ico">📋</div><span>Jobs</span></div>
+            <div class="tab on"><div class="ico">🗺️</div><span>Demand</span></div>
+            <div class="tab"><div class="ico">📅</div><span>Schedule</span></div>
+            <div class="tab"><div class="ico">💬</div><span>Inbox</span></div>
+            <div class="tab"><div class="ico">👤</div><span>Profile</span></div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 06 · Demand near you</div>
+        <h2 class="title-lg">One data layer.<br><em class="y">Two audiences.</em></h2>
+        <p class="lede" style="max-width: 800px;">
+          Tutors see where demand is clustering and which subjects are trending in real time —
+          so they can expand service areas to the highest-fill zones. Same data layer powers ops.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Live request density</div>
+              <div class="d">Heat blobs show where guardians are posting right now, weighted by recency.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Top zones, sorted by heat</div>
+              <div class="d">Subject + level breakdown per zone. Actionable: "add Lalmatia to your areas."</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Ops · acquisition signal</div>
+              <div class="d">Same map shows where supply is thin → where we run tutor acquisition campaigns.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Be a magnet for tutors</span>
+          <span class="pill">Hyperlocal</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Demand</div><div>07 / 14</div></div>
+  </section>
+
+  <!-- ─── 8 · LOCATION / MAPS ───────────────────────────────── -->
+  <section data-screen-label="08 Location">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>08 · Location · privacy-controlled reveal</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="display:flex; align-items:center; gap: 12px; padding: 14px 4px 8px;">
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 14px;">←</div>
+              <div style="flex: 1;">
+                <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Dhanmondi 27</div>
+                <div style="font-size: 17px; font-weight: 600;">Navigate to home</div>
+              </div>
+            </div>
+
+            <!-- Map area with route -->
+            <div style="position: relative; height: 280px; border-radius: 16px; overflow: hidden; background: #2a2620; border: 1px solid var(--line);">
+              <svg viewBox="0 0 380 280" style="width: 100%; height: 100%;">
+                <rect width="380" height="280" fill="#26221c"/>
+                <g fill="#3d362a">
+                  <rect x="20" y="20" width="60" height="40" rx="3"/>
+                  <rect x="100" y="20" width="50" height="40" rx="3"/>
+                  <rect x="180" y="20" width="60" height="40" rx="3"/>
+                  <rect x="260" y="20" width="80" height="40" rx="3"/>
+                  <rect x="20" y="160" width="60" height="60" rx="3"/>
+                  <rect x="100" y="160" width="50" height="40" rx="3"/>
+                  <rect x="180" y="160" width="50" height="60" rx="3"/>
+                </g>
+                <g stroke="#5a4f3d" stroke-width="3" stroke-linecap="round">
+                  <line x1="0" y1="120" x2="380" y2="124"/>
+                  <line x1="0" y1="220" x2="380" y2="216"/>
+                  <line x1="120" y1="0" x2="120" y2="280"/>
+                  <line x1="240" y1="0" x2="244" y2="280"/>
+                </g>
+                <!-- you -->
+                <g transform="translate(110, 220)">
+                  <circle r="22" fill="#FFC83D" opacity="0.2"/>
+                  <circle r="9" fill="#FFC83D" stroke="#0F0F0F" stroke-width="3"/>
+                </g>
+                <!-- route -->
+                <path d="M110 220 Q 150 190, 180 170 T 240 120 Q 246 110, 248 102"
+                  stroke="#FFC83D" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <!-- destination pin -->
+                <g transform="translate(248, 98)">
+                  <path d="M0 -8 C -10 -8, -16 -2, -16 6 C -16 16, 0 30, 0 30 C 0 30, 16 16, 16 6 C 16 -2, 10 -8, 0 -8 Z"
+                    fill="#FFC83D" stroke="#0F0F0F" stroke-width="2"/>
+                  <circle r="4" cy="2" fill="#0F0F0F"/>
+                </g>
+              </svg>
+
+              <div style="position: absolute; top: 10px; left: 10px; right: 10px; background: var(--surface); border-radius: 10px; padding: 8px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+                <span style="font-size: 12px;">🔍</span>
+                <div style="flex: 1; font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">House 47, Road 9/A, Dhanmondi 27</div>
+                <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--primary); font-weight: 700; letter-spacing: 0.08em;">14 MIN</div>
+              </div>
+            </div>
+
+            <div class="pcard" style="padding: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(126,217,168,0.18); color: var(--accent); display: flex; align-items: center; justify-content: center;">✓</div>
+                <div style="flex: 1;">
+                  <div style="font-size: 12px; font-weight: 700;">Location unlocked</div>
+                  <div style="font-size: 10px; color: var(--text-2); margin-top: 2px;">Mr. Rahman approved · just now</div>
+                </div>
+              </div>
+              <div style="padding-top: 10px; border-top: 1px dashed var(--line); display: flex; justify-content: space-between; gap: 6px;">
+                <div>
+                  <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em;">1.4 km</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; margin-top: 2px;">BY ROAD</div>
+                </div>
+                <div>
+                  <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em;">14 min</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; margin-top: 2px;">RICKSHAW</div>
+                </div>
+                <div>
+                  <div style="font-size: 18px; font-weight: 700; letter-spacing: -0.01em;">6 min</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; margin-top: 2px;">CAR</div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <div style="flex: 1; background: var(--surface); border: 1px solid var(--line); padding: 9px; border-radius: 999px; text-align: center; font-size: 11px; font-weight: 600;">📞 Call masked</div>
+                <div style="flex: 1; background: var(--primary); color: var(--ink); padding: 9px; border-radius: 999px; text-align: center; font-size: 11px; font-weight: 700;">▲ Navigate</div>
+              </div>
+            </div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 07 · Location · privacy</div>
+        <h2 class="title-lg">A guardian's home is <em class="y">never exposed</em> to strangers.</h2>
+        <p class="lede" style="max-width: 800px;">
+          Before approval, only a fuzzed area pin. On approval, exact address and Google Maps
+          turn-by-turn — for that one tutor, that one job. Scoped and revocable.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Posted</div>
+              <div class="d">Public view is area + landmark + ~300m approximate pin. Enough to estimate commute.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Requested</div>
+              <div class="d">Tutor taps "Request location." Guardian gets a single tap to approve — one tutor or all shortlisted at once.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Unlocked</div>
+              <div class="d">Exact pin + Google Maps turn-by-turn unlock in-app. Auto-revoked if tutor isn't hired.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; padding: 16px 20px; background: var(--surface); border-radius: 14px; border: 1px solid var(--line); display: flex; align-items: center; gap: 14px;">
+          <div style="font-family: 'DM Mono'; font-size: 11px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase; width: 60px;">3-in-1</div>
+          <div style="font-size: 14px; color: var(--text-2); line-height: 1.5;">
+            <strong style="color: var(--text);">Safety</strong> for guardians ·
+            <strong style="color: var(--text);">anti-leakage</strong> (navigation lives in-app) ·
+            <strong style="color: var(--text);">trust signal</strong> on first contact.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Location</div><div>08 / 14</div></div>
+  </section>
+
+  <!-- ─── 9 · SCHEDULE / ATTENDANCE ─────────────────────────── -->
+  <section data-screen-label="09 Schedule">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>09 · Schedule + attendance</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="padding: 14px 4px 8px;">
+              <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">May · Week 21</div>
+              <div style="font-size: 24px; font-weight: 600; margin-top: 2px; letter-spacing: -0.01em;">Today, Mon 25</div>
+            </div>
+
+            <!-- Week strip -->
+            <div style="display: flex; gap: 4px;">
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">SAT</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">23</div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">SUN</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">24</div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; background: var(--text); color: var(--ink);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; opacity: 0.7; letter-spacing: 0.1em;">MON</div>
+                <div style="font-size: 16px; font-weight: 700; margin-top: 2px;">25</div>
+                <div style="display: flex; justify-content: center; gap: 2px; margin-top: 4px;">
+                  <div style="width: 3px; height: 3px; border-radius: 2px; background: var(--primary);"></div>
+                  <div style="width: 3px; height: 3px; border-radius: 2px; background: var(--primary);"></div>
+                </div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">TUE</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">26</div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">WED</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">27</div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em;">THU</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">28</div>
+              </div>
+              <div style="flex: 1; padding: 8px 0; border-radius: 10px; text-align: center; border: 1px solid var(--line); color: var(--text-3);">
+                <div style="font-family: 'DM Mono'; font-size: 8px; letter-spacing: 0.1em;">FRI</div>
+                <div style="font-size: 16px; font-weight: 600; margin-top: 2px;">29</div>
+              </div>
+            </div>
+
+            <!-- Earnings strip -->
+            <div style="background: var(--primary); color: var(--ink); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;">
+              <div style="flex: 1;">
+                <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.7; letter-spacing: 0.14em; text-transform: uppercase;">This week</div>
+                <div style="font-size: 22px; font-weight: 700; margin-top: 2px; letter-spacing: -0.01em; line-height: 1;">৳ 6,250</div>
+                <div style="font-size: 10px; opacity: 0.8; margin-top: 4px;">Auto-collected · 5 of 7 students</div>
+              </div>
+              <div style="background: rgba(15,15,15,0.1); border-radius: 8px; padding: 6px 10px; text-align: right;">
+                <div style="font-size: 9px; opacity: 0.7;">Payout</div>
+                <div style="font-family: 'DM Mono'; font-size: 11px; font-weight: 700; margin-top: 2px;">FRI</div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 8px 4px 4px;">Classes today</div>
+
+            <!-- Class card with attendance CTA -->
+            <div class="pcard" style="padding: 12px;">
+              <div style="display: flex; gap: 12px;">
+                <div style="background: rgba(255,200,61,0.14); color: var(--primary); border-radius: 8px; padding: 8px 0; text-align: center; width: 48px;">
+                  <div style="font-size: 14px; font-weight: 700;">6:30</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; opacity: 0.8; margin-top: 2px;">PM · 90M</div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 700;">Ifrat Rahman</div>
+                  <div style="font-size: 11px; color: var(--text-2); margin-top: 2px;">Physics, Math · Dhanmondi 27</div>
+                </div>
+              </div>
+              <div style="padding-top: 10px; border-top: 1px dashed var(--line); display: flex; gap: 6px;">
+                <div style="background: var(--surface); border: 1px solid var(--line); padding: 6px 10px; border-radius: 999px; font-size: 10px; font-weight: 600;">▲ Navigate</div>
+                <div style="flex: 1;"></div>
+                <div style="background: var(--primary); color: var(--ink); padding: 6px 12px; border-radius: 999px; font-size: 10px; font-weight: 700;">✓ Mark attended</div>
+              </div>
+            </div>
+
+            <div class="pcard" style="padding: 12px;">
+              <div style="display: flex; gap: 12px;">
+                <div style="background: var(--ink-2); color: var(--text-2); border-radius: 8px; padding: 8px 0; text-align: center; width: 48px;">
+                  <div style="font-size: 14px; font-weight: 700;">8:30</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; opacity: 0.8; margin-top: 2px;">PM · 60M</div>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 13px; font-weight: 700;">Saif Akter</div>
+                  <div style="font-size: 11px; color: var(--text-2); margin-top: 2px;">Math · Mohammadpur</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tabs" style="margin: 0 18px;">
+            <div class="tab"><div class="ico">📋</div><span>Jobs</span></div>
+            <div class="tab"><div class="ico">🗺️</div><span>Demand</span></div>
+            <div class="tab on"><div class="ico">📅</div><span>Schedule</span></div>
+            <div class="tab"><div class="ico">💬</div><span>Inbox</span></div>
+            <div class="tab"><div class="ico">👤</div><span>Profile</span></div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 08 · Schedule + attendance</div>
+        <h2 class="title-lg">Attendance =<br><em class="y">payment.</em></h2>
+        <p class="lede" style="max-width: 800px;">
+          Tutors mark attendance per class. That single tap links to the payment engine —
+          payment protection only fires when attendance is logged and confirmed.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Per-class attendance log</div>
+              <div class="d">One tap to mark attended. Feeds the recurring payment engine and the reputation engine simultaneously.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Earnings always visible</div>
+              <div class="d">Week-to-date, next payout, auto-collection status. No more guessing what's coming on Friday.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Leave / reschedule in-app</div>
+              <div class="d">Comms stay on-platform — every reschedule is logged for the reliability score.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Kill the leakage</span>
+          <span class="pill">Trust is the moat</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Schedule</div><div>09 / 14</div></div>
+  </section>
+
+  <!-- ─── 10 · MASKED CHAT ──────────────────────────────────── -->
+  <section data-screen-label="10 Chat">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>10 · Masked inbox</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <!-- Chat header -->
+            <div style="display:flex; align-items:center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--line);">
+              <div style="width: 30px; height: 30px; border-radius: 15px; background: var(--surface); border: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 12px;">←</div>
+              <div style="width: 34px; height: 34px; border-radius: 17px; background: #4a6a3f; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;">MR</div>
+              <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px;">Mr. Rahman 🔒</div>
+                <div style="font-size: 10px; color: var(--text-3); margin-top: 1px;">via Tution Media · masked</div>
+              </div>
+              <div style="width: 30px; height: 30px; border-radius: 15px; background: var(--surface); border: 1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size: 12px;">📞</div>
+            </div>
+
+            <div style="text-align: center; font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 14px 0 8px;">· Today ·</div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; justify-content: flex-start;">
+                <div style="max-width: 80%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; border-top-left-radius: 4px; font-size: 12px; line-height: 1.4;">
+                  Hi, I saw your application for my daughter's physics tuition.
+                  <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.5; text-align: right; margin-top: 4px;">8:58am</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-start;">
+                <div style="max-width: 80%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; border-top-left-radius: 4px; font-size: 12px; line-height: 1.4;">
+                  BUET ME with 3.78 — looks great. Can you do 4 days a week?
+                  <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.5; text-align: right; margin-top: 4px;">8:59am</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-end;">
+                <div style="max-width: 80%; padding: 10px 12px; background: var(--primary); color: var(--ink); border-radius: 14px; border-top-right-radius: 4px; font-size: 12px; line-height: 1.4;">
+                  Hello sir, yes — 4 days/wk works. I can start this Saturday.
+                  <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">9:02am</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-end;">
+                <div style="max-width: 80%; padding: 10px 12px; background: var(--primary); color: var(--ink); border-radius: 14px; border-top-right-radius: 4px; font-size: 12px; line-height: 1.4;">
+                  Would you like to do a trial class first?
+                  <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.6; text-align: right; margin-top: 4px;">9:02am</div>
+                </div>
+              </div>
+              <div style="align-self: center; background: rgba(126,217,168,0.18); color: var(--accent); padding: 5px 12px; border-radius: 999px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                ✓ Trial booked · Sat 6:30pm
+              </div>
+              <div style="display: flex; justify-content: flex-start;">
+                <div style="max-width: 80%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; border-top-left-radius: 4px; font-size: 12px; line-height: 1.4;">
+                  Approved your location request — see you tomorrow.
+                  <div style="font-family: 'DM Mono'; font-size: 9px; opacity: 0.5; text-align: right; margin-top: 4px;">9:14am</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: auto; padding: 10px 0; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 6px;">
+              <div style="flex: 1; background: var(--surface); border: 1px solid var(--line); padding: 9px 14px; border-radius: 18px; font-size: 12px; color: var(--text-3);">Reply to Mr. Rahman…</div>
+              <div style="width: 32px; height: 32px; border-radius: 16px; background: var(--primary); color: var(--ink); display: flex; align-items: center; justify-content: center;">➤</div>
+            </div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 09 · Masked inbox</div>
+        <h2 class="title-lg">Numbers <em class="y">stay private.</em></h2>
+        <p class="lede" style="max-width: 800px;">
+          Every chat and call routes through the platform. Guardians never see the tutor's phone
+          number — and vice versa. Anti-harassment and anti-leakage in one mechanism.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Number masking, both sides</div>
+              <div class="d">VOIP for calls, in-app for chat. The platform is the comms layer — period.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">System messages mark transitions</div>
+              <div class="d">"Trial booked," "Location approved," "First payment received" — green chips inline in the thread.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">WhatsApp / SMS fallback</div>
+              <div class="d">Critical alerts still send via SMS — device and data realities in Bangladesh are non-negotiable.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Kill the leakage</span>
+          <span class="pill">Safety</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Inbox</div><div>10 / 14</div></div>
+  </section>
+
+  <!-- ─── 11 · REPUTATION / PROFILE ─────────────────────────── -->
+  <section data-screen-label="11 Reputation">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>11 · Reputation · the asset</div>
+    </div>
+
+    <div class="body">
+      <div class="phone-col">
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="statusbar"><span>9:30</span><span>● ●●● ▮▮▮</span></div>
+          <div class="body-area" style="padding: 0 18px;">
+            <div style="display:flex; align-items:center; gap: 12px; padding: 14px 4px 8px;">
+              <div style="width: 56px; height: 56px; border-radius: 28px; background: #c79100; color: var(--ink); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px;">TH</div>
+              <div style="flex: 1;">
+                <div style="font-size: 18px; font-weight: 700;">Tanvir Hasan</div>
+                <div style="display: flex; align-items: center; gap: 4px; margin-top: 4px;">
+                  <span class="ptag a" style="font-size: 9px; padding: 3px 7px;">🛡 ●●●○</span>
+                  <span style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.04em;">@tanvir.h</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tier card -->
+            <div class="pcard" style="background: var(--ink-2); padding: 14px;">
+              <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                <div>
+                  <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase;">Reputation tier</div>
+                  <div style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; line-height: 1;">Trusted</div>
+                  <div style="font-size: 10px; color: var(--text-2); margin-top: 6px;">12 of 25 hires to <strong class="yellow">Expert</strong></div>
+                </div>
+                <div style="font-size: 32px; color: var(--primary);">🏆</div>
+              </div>
+              <div style="height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; overflow: hidden;"><div style="width: 48%; height: 100%; background: var(--primary);"></div></div>
+              <div style="display: flex; justify-content: space-between; font-family: 'DM Mono'; font-size: 7.5px; color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase;">
+                <span>Apprentice</span><span>Tutor</span><span class="yellow">Trusted</span><span>Expert</span><span>Mentor</span>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="pcard" style="padding: 14px;">
+              <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                <div>
+                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">4.9</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px;">Rating</div>
+                </div>
+                <div>
+                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">14</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px;">Hires</div>
+                </div>
+                <div>
+                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">98%</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px;">On-time</div>
+                </div>
+                <div>
+                  <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">86%</div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px;">Retained</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-family: 'DM Mono'; font-size: 9px; color: var(--text-3); letter-spacing: 0.16em; text-transform: uppercase; padding: 4px 4px 0;">Verified reviews</div>
+
+            <div class="pcard" style="padding: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <div style="width: 20px; height: 20px; border-radius: 10px; background: #6b5b95; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700;">MR</div>
+                  <span style="font-size: 11px; font-weight: 600;">Mr. Rahman ✓</span>
+                </div>
+                <div style="display: flex; gap: 2px; color: var(--primary); font-size: 10px;">★★★★★</div>
+              </div>
+              <div style="font-size: 11px; color: var(--text-2); margin-top: 8px; line-height: 1.45;">"Tanvir is patient and explains physics in a way my daughter finally gets. On-time every class."</div>
+              <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px;">MAY · 3-MONTH ENGAGEMENT</div>
+            </div>
+
+            <!-- Earnings -->
+            <div class="pcard" style="padding: 14px;">
+              <div style="display: flex; align-items: flex-end; justify-content: space-between;">
+                <div>
+                  <div style="font-family: 'DM Mono'; font-size: 8px; color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase;">This month</div>
+                  <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; line-height: 1;">৳ 28,400</div>
+                  <div style="font-size: 10px; color: var(--accent); margin-top: 4px;">↑ ৳3,200 vs April</div>
+                </div>
+                <svg width="80" height="40" viewBox="0 0 80 40">
+                  <rect x="0" y="22" width="9" height="18" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="12" y="16" width="9" height="24" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="24" y="24" width="9" height="16" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="36" y="12" width="9" height="28" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="48" y="6" width="9" height="34" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="60" y="10" width="9" height="30" rx="1.5" fill="var(--ink-2)"/>
+                  <rect x="72" y="0" width="9" height="40" rx="1.5" fill="var(--primary)"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="tabs" style="margin: 0 18px;">
+            <div class="tab"><div class="ico">📋</div><span>Jobs</span></div>
+            <div class="tab"><div class="ico">🗺️</div><span>Demand</span></div>
+            <div class="tab"><div class="ico">📅</div><span>Schedule</span></div>
+            <div class="tab"><div class="ico">💬</div><span>Inbox</span></div>
+            <div class="tab on"><div class="ico">👤</div><span>Profile</span></div>
+          </div>
+          <div class="pill-bar"><div class="gp"></div></div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">Screen 10 · Reputation profile</div>
+        <h2 class="title-lg">Reputation that <em class="y">compounds</em> — on-platform.</h2>
+        <p class="lede" style="max-width: 800px;">
+          Ratings, on-time percentage, retention, hires, earnings. Every metric accrues only from
+          confirmed, paid, on-platform tuitions. The asset tutors would forfeit by leaving.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 18px;">
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Five tiers · ladder visible</div>
+              <div class="d">Apprentice → Tutor → Trusted → Expert → Mentor. Higher tiers unlock higher-paying jobs.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Verified reviews only</div>
+              <div class="d">Reviews can only be left from confirmed, paid tuitions. Unfakeable.</div>
+            </div>
+          </div>
+          <div class="feat">
+            <div class="b"></div>
+            <div>
+              <div class="t">Verified income statement</div>
+              <div class="d">Monthly earnings with a paper trail. The basis for our future tutor lending product.</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: auto; display: flex; gap: 12px; flex-wrap: wrap;">
+          <span class="pill y">Trust is the moat</span>
+          <span class="pill">Kill the leakage</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Reputation</div><div>11 / 14</div></div>
+  </section>
+
+  <!-- ─── 12 · THE COMPLETE SYSTEM ──────────────────────────── -->
+  <section data-screen-label="12 Overview">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>12 · The complete system</div>
+    </div>
+
+    <div class="body" style="flex-direction: column; gap: 36px;">
+      <div>
+        <div class="eyebrow">10 screens · 4 loops</div>
+        <h2 class="h2" style="margin-top: 16px;">Every screen serves at least one <em class="y">product principle.</em></h2>
+      </div>
+
+      <div class="mosaic">
+        <div class="cell">
+          <div class="n">01</div>
+          <div class="t">Onboarding · OTP</div>
+          <div class="d">Phone-only. No documents. Bangla-first.</div>
+        </div>
+        <div class="cell">
+          <div class="n">02</div>
+          <div class="t">Profile builder</div>
+          <div class="d">Subjects, levels, areas, availability grid.</div>
+        </div>
+        <div class="cell">
+          <div class="n">03</div>
+          <div class="t">Live job feed</div>
+          <div class="d">Match scores. 1-tap apply. Push + SMS.</div>
+        </div>
+        <div class="cell">
+          <div class="n">04</div>
+          <div class="t">Application tracker</div>
+          <div class="d">Five visible stages. Always actionable.</div>
+        </div>
+        <div class="cell" style="background: var(--primary); color: var(--ink); border-color: transparent;">
+          <div class="n" style="color: var(--ink); opacity: 0.6;">05</div>
+          <div class="t">Verification ladder</div>
+          <div class="d" style="color: rgba(15,15,15,0.75);">Gated before placement. 3.4× shortlists.</div>
+        </div>
+        <div class="cell">
+          <div class="n">06</div>
+          <div class="t">Demand near you</div>
+          <div class="d">Heatmap of live request density.</div>
+        </div>
+        <div class="cell">
+          <div class="n">07</div>
+          <div class="t">Location reveal</div>
+          <div class="d">Fuzzed by default. Maps unlocks on grant.</div>
+        </div>
+        <div class="cell">
+          <div class="n">08</div>
+          <div class="t">Schedule + attendance</div>
+          <div class="d">Per-class log feeds payments.</div>
+        </div>
+        <div class="cell">
+          <div class="n">09</div>
+          <div class="t">Masked inbox</div>
+          <div class="d">Number masking. Anti-leakage.</div>
+        </div>
+        <div class="cell">
+          <div class="n">10</div>
+          <div class="t">Reputation profile</div>
+          <div class="d">Compounds only on-platform.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>System overview</div><div>12 / 14</div></div>
+  </section>
+
+  <!-- ─── 13 · CROSS-CUTTING ────────────────────────────────── -->
+  <section data-screen-label="13 Cross-cutting">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>13 · The three things that make it work</div>
+    </div>
+
+    <div class="body" style="flex-direction: column;">
+      <div>
+        <div class="eyebrow">Cross-cutting features</div>
+        <h2 class="h2" style="margin-top: 16px;">Three mechanisms tie the screens into a <em class="y">system.</em></h2>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; flex: 1; margin-top: 24px;">
+        <div class="card" style="display: flex; flex-direction: column; gap: 18px;">
+          <div style="font-size: 60px; line-height: 1;">🔒</div>
+          <div>
+            <div class="meta">Mechanism 01</div>
+            <div style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-top: 10px; line-height: 1.05;">Masked communication</div>
+          </div>
+          <div style="font-size: 16px; color: var(--text-2); line-height: 1.5;">
+            Every chat and call routes through the platform. No phone numbers exchanged.
+            Safety + anti-leakage in one mechanism — guardians and tutors stay on-platform
+            because the rails are simply better than informal alternatives.
+          </div>
+          <div style="margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="pill">Inbox</span><span class="pill">Voice masking</span>
+          </div>
+        </div>
+
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent; display: flex; flex-direction: column; gap: 18px;">
+          <div style="font-size: 60px; line-height: 1;">৳</div>
+          <div>
+            <div class="meta" style="color: rgba(15,15,15,0.55);">Mechanism 02</div>
+            <div style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-top: 10px; line-height: 1.05;">Auto-collected payments</div>
+          </div>
+          <div style="font-size: 16px; color: rgba(15,15,15,0.78); line-height: 1.5;">
+            The awkward monthly "please pay me" ask — gone. Recurring rails collect from
+            guardian, pay out to tutor. Attendance-linked payment protection only fires
+            when tuitions stay on-platform.
+          </div>
+          <div style="margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Schedule</span>
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Attendance</span>
+          </div>
+        </div>
+
+        <div class="card" style="display: flex; flex-direction: column; gap: 18px;">
+          <div style="font-size: 60px; line-height: 1;">⭐</div>
+          <div>
+            <div class="meta">Mechanism 03</div>
+            <div style="font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-top: 10px; line-height: 1.05;">Verified reputation</div>
+          </div>
+          <div style="font-size: 16px; color: var(--text-2); line-height: 1.5;">
+            Reviews are unfakeable — only from confirmed, paid, on-platform tuitions.
+            Reputation tiers unlock higher-paying jobs. The compounding asset tutors
+            would lose by going informal.
+          </div>
+          <div style="margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="pill">Profile</span><span class="pill">Verification</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Cross-cutting</div><div>13 / 14</div></div>
+  </section>
+
+  <!-- ─── 14 · CLOSE ────────────────────────────────────────── -->
+  <section data-screen-label="14 Close" class="light-bg">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>14 · End of walkthrough</div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 80px 0; gap: 60px;">
+      <div class="eyebrow" style="color: rgba(15,15,15,0.55);">Thank you</div>
+      <h1 class="title-xl" style="color: var(--ink); font-size: 156px;">
+        Ten screens.<br>
+        <em class="y" style="color: #c79100;">One system</em><br>
+        that compounds.
+      </h1>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 60px; margin-top: 36px;">
+        <div>
+          <div class="meta">For tutors</div>
+          <div style="font-size: 22px; font-weight: 500; color: var(--ink); margin-top: 12px; line-height: 1.3;">
+            Fast money. Fast matches.<br>
+            Reputation that travels.
+          </div>
+        </div>
+        <div>
+          <div class="meta">For guardians</div>
+          <div style="font-size: 22px; font-weight: 500; color: var(--ink); margin-top: 12px; line-height: 1.3;">
+            Verified tutors. Private address.<br>
+            Money flow handled.
+          </div>
+        </div>
+        <div>
+          <div class="meta">For us</div>
+          <div style="font-size: 22px; font-weight: 500; color: var(--ink); margin-top: 12px; line-height: 1.3;">
+            Every recurring month<br>
+            is a revenue moment.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center; margin-top: 24px;">
+        <span class="pill" style="background: var(--primary); color: var(--ink); border-color: transparent; font-weight: 600; font-size: 14px; padding: 12px 20px;">Let's talk</span>
+        <span style="font-family: 'DM Mono'; font-size: 14px; color: rgba(15,15,15,0.65); letter-spacing: 0.06em;">founders@tution.media · +880 1712 048 391</span>
+      </div>
+    </div>
+
+    <div class="footer"><div>Confidential · Tution Media</div><div>14 / 14</div></div>
+  </section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+
+</body>
+</html>

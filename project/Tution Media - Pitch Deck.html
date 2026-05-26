@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tution Media · Pitch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800;9..40,900&family=DM+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ink:        #0F0F0F;
+    --ink-2:      #181818;
+    --surface:    #1E1E1E;
+    --surface-2:  #262626;
+    --line:       rgba(255,255,255,0.08);
+    --line-2:     rgba(255,255,255,0.14);
+    --paper:      #F5F5F5;
+    --paper-ink:  #0F0F0F;
+    --primary:    #FFC83D;
+    --primary-2:  #FFB800;
+    --text:       #FFFFFF;
+    --text-2:     #C8C8C8;
+    --text-3:     #888888;
+    --accent:     #7ED9A8;
+  }
+  html, body { margin: 0; padding: 0; background: #050505; color: var(--text);
+    font-family: 'DM Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased; }
+
+  deck-stage section {
+    width: 1920px; height: 1080px;
+    background: var(--ink);
+    color: var(--text);
+    overflow: hidden; position: relative;
+    padding: 80px 96px; box-sizing: border-box;
+    display: flex; flex-direction: column;
+  }
+
+  /* Page header (eyebrow + page number) */
+  .header { display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono'; font-size: 14px; letter-spacing: 0.18em;
+    color: var(--text-3); text-transform: uppercase;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  .header .wm { display: flex; align-items: center; gap: 12px; }
+  .header .wm .dot { width: 8px; height: 8px; border-radius: 4px; background: var(--primary); }
+  .header .wm b { color: var(--text); font-family: 'DM Sans'; font-weight: 700; letter-spacing: 0; text-transform: none; font-size: 16px; }
+
+  /* Typography */
+  h1, h2, h3 { margin: 0; font-family: 'DM Sans'; font-weight: 600; letter-spacing: -0.02em; }
+  .title { font-size: 160px; line-height: 0.92; font-weight: 700; letter-spacing: -0.045em; }
+  .eyebrow { font-family: 'DM Mono'; font-size: 14px; letter-spacing: 0.2em; color: var(--text-3); text-transform: uppercase; }
+  .display { font-size: 100px; line-height: 0.96; font-weight: 600; letter-spacing: -0.035em; }
+  .h2 { font-size: 72px; line-height: 0.98; font-weight: 600; letter-spacing: -0.025em; }
+  .h3 { font-size: 36px; line-height: 1.08; font-weight: 600; letter-spacing: -0.015em; }
+  .lede { font-size: 28px; line-height: 1.42; color: var(--text-2); font-weight: 400; max-width: 1300px; }
+  .meta { font-family: 'DM Mono'; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+
+  /* Highlight */
+  .yellow { color: var(--primary); }
+  em.y { color: var(--primary); font-style: normal; font-weight: 600; }
+  s.line { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--text-3); }
+
+  /* Surfaces */
+  .card { background: var(--surface); border: 1px solid var(--line);
+    border-radius: 28px; padding: 36px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 14px 36px rgba(0,0,0,0.35);
+  }
+  .card.paper { background: var(--paper); color: var(--paper-ink); border-color: rgba(0,0,0,0.05); }
+  .card.paper .meta { color: rgba(15,15,15,0.55); }
+  .card.paper .text-2 { color: rgba(15,15,15,0.7); }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+    border-radius: 999px; background: rgba(255,255,255,0.06);
+    border: 1px solid var(--line-2); font-family: 'DM Mono'; font-size: 13px;
+    letter-spacing: 0.06em; color: var(--text-2); text-transform: uppercase; }
+  .pill.y { background: var(--primary); color: var(--ink); border-color: transparent; }
+  .pill.a { background: rgba(126,217,168,0.14); color: var(--accent); border-color: transparent; }
+
+  /* Specific layouts */
+  .stack { display: flex; flex-direction: column; gap: 36px; flex: 1; }
+  .row { display: flex; gap: 36px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; flex: 1; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; flex: 1; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; flex: 1; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; flex: 1; }
+  .num { font-size: 140px; line-height: 0.9; font-weight: 700; letter-spacing: -0.04em; font-feature-settings: "tnum"; }
+  .num-md { font-size: 80px; line-height: 0.9; font-weight: 600; letter-spacing: -0.025em; font-feature-settings: "tnum"; }
+
+  /* Footer */
+  .footer { display: flex; align-items: center; justify-content: space-between;
+    font-family: 'DM Mono'; font-size: 13px; letter-spacing: 0.14em;
+    color: var(--text-3); text-transform: uppercase; padding-top: 24px;
+    border-top: 1px solid var(--line); }
+
+  /* Body container fills remaining space */
+  .body { flex: 1; display: flex; flex-direction: column; gap: 36px; padding: 56px 0 36px; }
+
+  /* Inline icon */
+  .ico { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .ico-lg { width: 32px; height: 32px; }
+
+  /* Mini phone preview */
+  .phone { width: 360px; height: 720px; background: var(--ink); border-radius: 36px;
+    border: 8px solid #2a2a2a; box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+    overflow: hidden; position: relative; }
+  .phone-paper { width: 100%; height: 100%; padding: 22px; box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 14px; }
+
+  /* TOC bar */
+  .toc { display: flex; gap: 8px; flex-wrap: wrap; }
+  .toc span { font-family: 'DM Mono'; font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 6px 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.04); color: var(--text-3); border: 1px solid var(--line); }
+
+  .light-bg { background: var(--paper); color: var(--paper-ink); }
+  .light-bg .header { border-bottom-color: rgba(0,0,0,0.08); color: rgba(15,15,15,0.55); }
+  .light-bg .header .wm b { color: var(--paper-ink); }
+  .light-bg .footer { border-top-color: rgba(0,0,0,0.08); color: rgba(15,15,15,0.55); }
+  .light-bg .card { background: #FFFFFF; border-color: rgba(0,0,0,0.04); color: var(--paper-ink); }
+  .light-bg .meta { color: rgba(15,15,15,0.55); }
+  .light-bg .lede { color: rgba(15,15,15,0.72); }
+  .light-bg .pill { background: rgba(15,15,15,0.06); color: rgba(15,15,15,0.7); border-color: rgba(15,15,15,0.08); }
+  .light-bg .pill.y { background: var(--primary); color: var(--ink); }
+
+  /* Dotted grid (light slides only) */
+  .dot-bg::before {
+    content:''; position:absolute; inset:0; pointer-events:none; opacity:0.5;
+    background-image: radial-gradient(rgba(15,15,15,0.10) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Editable cue: numeric figure styling */
+  .fig { display: flex; flex-direction: column; gap: 12px; }
+  .fig .v { font-size: 96px; font-weight: 700; line-height: 0.9; letter-spacing: -0.035em; font-feature-settings: "tnum"; }
+  .fig .l { font-family: 'DM Mono'; font-size: 13px; letter-spacing: 0.12em; color: var(--text-3); text-transform: uppercase; }
+  .fig .s { font-size: 18px; color: var(--text-2); line-height: 1.4; }
+
+  /* Step ladder */
+  .ladder { display: flex; flex-direction: column; gap: 16px; }
+  .step { display: grid; grid-template-columns: 72px 1fr auto; align-items: center; gap: 24px;
+    padding: 20px 28px; border-radius: 20px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--line); }
+  .step .n { font-family: 'DM Mono'; font-size: 16px; color: var(--text-3); letter-spacing: 0.1em; }
+  .step .t { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; }
+  .step .d { font-family: 'DM Mono'; font-size: 13px; color: var(--text-3); letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* DM Sans display use */
+  .display-tight { font-size: 132px; line-height: 0.9; font-weight: 700; letter-spacing: -0.045em; }
+</style>
+</head>
+<body>
+
+<script type="application/json" id="speaker-notes">
+[
+"Hello — this is Tution Media. We're building Dhaka's first tutor marketplace that owns the ongoing relationship, not just the match. The incumbent monetizes once at placement, then the tutor and guardian leave the platform. We don't.",
+"Here is the market. Bangladesh has a massive informal tuition economy and the incumbent — Caretutors — is 13 years old, has the supply, but tutors wait weeks for matches and the moment a tuition is confirmed, everything leaves the platform. The monthly money, the comms, the accountability.",
+"Our wedge is to own the relationship and the money flow. The incumbent matches, monetizes once, and moves on. We match, then make every recurring month a revenue moment.",
+"Five principles guide every feature: be a magnet for tutors, kill the leakage, make trust the moat, stay hyperlocal at the neighborhood level, and respect bootstrap discipline.",
+"This is the spine of the tutor app. Easy OTP signup with no documents, browse before you verify, one-tap apply, then a verification gate before placement, then in-app trial booking, digital agreement, and recurring auto-collection — the moat moment.",
+"Verification is the trust object. Optional to start — but required before a tutor can be confirmed. We gate at the moment of real opportunity, when conversion is highest. Verified tutors are over three times more likely to be shortlisted.",
+"Demand near you is the tutor-facing heatmap. It tells a tutor where requests are clustering and which subjects are trending — so they pick service areas that maximize fill rate. Same data layer powers ops decisions on where to acquire and where to run campaigns.",
+"Privacy-controlled location. A guardian's home address is never exposed to strangers — only fuzzed area + landmark, until they explicitly approve a tutor. On approval, exact pin and Google Maps navigation unlock in-app. Three features in one: safety, anti-leakage, and trust signal.",
+"This is the moat. Auto-collected monthly payments, attendance-linked payment protection, verified reputation that only accrues on-platform, replacement guarantee, masked comms — every value layer is only available if you stay.",
+"We are phased. V1 proves the matching loop in two Dhaka clusters. V2 builds the recurring rails — that's where the moat hardens. V3 layers fintech, verticals, and B2B.",
+"Monetization maps cleanly to the phases. Placement fee in V1 to start cash flow. Then GMV take rate and payment protection fees in V2 — the recurring engine. Eventually lending margin and B2B in V3.",
+"Go to market is supply-first. Two areas — one in DNCC, one in DSCC — sequenced not split. We need tutor density before we open demand floodgates. Hyperlocal liquidity is the whole game.",
+"Day one instrumentation. We measure on-platform GMV share — the inverse of leakage. That's the north-star number that tells us whether the moat is forming, and we compare every metric back to the incumbent.",
+"Why us, why now. Android-first PWA, deep local insight, and the discipline to build the unsexy money rails the incumbent never bothered with. We're raising $650k for 18 months runway through V2."
+]
+</script>
+
+<deck-stage scale-to-fit="true">
+
+  <!-- ─── 1 · TITLE ──────────────────────────────────────────── -->
+  <section data-screen-label="01 Cover">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>Pitch · May 2026 · v1.1</div>
+    </div>
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:space-between; padding: 120px 0 60px;">
+      <div>
+        <div class="eyebrow" style="margin-bottom: 36px;">Dhaka · Hyperlocal · Tutor-first</div>
+        <h1 class="title">
+          Match in <em class="y">days,</em><br>
+          not <s class="line">weeks.</s>
+        </h1>
+        <p class="lede" style="margin-top: 56px; max-width: 1100px;">
+          A tutor marketplace that owns the ongoing relationship — and the monthly money flow.
+          Not just the match.
+        </p>
+      </div>
+
+      <div style="display:flex; gap: 12px; align-items: center;">
+        <span class="pill y">Supply-first</span>
+        <span class="pill">PWA · Android-first</span>
+        <span class="pill">Bangla · English</span>
+        <span class="pill">Launch: 2 Dhaka clusters</span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>Confidential · Tution Media</div>
+      <div>01 / 14</div>
+    </div>
+  </section>
+
+  <!-- ─── 2 · WHY NOW ───────────────────────────────────────── -->
+  <section data-screen-label="02 The opening">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>02 · The opening</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">The opening</div>
+      <h2 class="display" style="max-width: 1500px;">
+        Tuition in Dhaka is huge, high-frequency, and <em class="y">untouched</em> by software where it counts.
+      </h2>
+
+      <div class="grid-3" style="margin-top: 40px;">
+        <div class="card">
+          <div class="fig">
+            <span class="l">Tutors waiting on the incumbent</span>
+            <span class="v yellow">2–4<span style="font-size:48px; color: var(--text-3);"> wks</span></span>
+            <span class="s">From signup to first match. We cut it to days.</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="fig">
+            <span class="l">Of the money flow happens off-platform</span>
+            <span class="v yellow">~100<span style="font-size:48px; color: var(--text-3);">%</span></span>
+            <span class="s">Caretutors monetizes once. Then cash leaves the building.</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="fig">
+            <span class="l">Years incumbent has had to fix this</span>
+            <span class="v yellow">13</span>
+            <span class="s">They haven't. We out-engineer and out-focus.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Why now</div><div>02 / 14</div></div>
+  </section>
+
+  <!-- ─── 3 · THE WEDGE ─────────────────────────────────────── -->
+  <section data-screen-label="03 The wedge">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>03 · The wedge</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">The wedge</div>
+      <h2 class="display" style="max-width: 1500px;">
+        Own the <em class="y">ongoing relationship</em> and the <em class="y">money flow</em> — not just the match.
+      </h2>
+
+      <div class="grid-2" style="margin-top: 24px;">
+        <div class="card paper" style="display:flex; flex-direction:column; gap: 20px;">
+          <div class="meta">Incumbent · Caretutors</div>
+          <div class="h3" style="font-weight: 600;">Match · monetize · move on.</div>
+          <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+            <span class="pill">Placement fee only</span>
+            <span class="pill">Comms leave platform</span>
+            <span class="pill">No recurring rails</span>
+            <span class="pill">No accountability</span>
+          </div>
+          <div style="margin-top: auto; font-size: 18px; line-height: 1.5; color: rgba(15,15,15,0.7);">
+            Day 1 they earn. Day 2 onward, value walks out the door — and so does the relationship.
+          </div>
+        </div>
+
+        <div class="card" style="background: var(--primary); color: var(--ink); display:flex; flex-direction:column; gap: 20px; border-color: transparent;">
+          <div class="meta" style="color: rgba(15,15,15,0.6);">Tution.media</div>
+          <div class="h3" style="font-weight: 700;">Match · stay · compound.</div>
+          <div style="display:flex; gap: 12px; flex-wrap: wrap;">
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Recurring monthly rails</span>
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Masked in-app comms</span>
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Verified reputation</span>
+            <span class="pill" style="background: rgba(15,15,15,0.1); color: var(--ink); border-color: transparent;">Payment protection</span>
+          </div>
+          <div style="margin-top: auto; font-size: 18px; line-height: 1.5; color: rgba(15,15,15,0.85); font-weight: 500;">
+            Every recurring month is revenue, every class taught is data, every review is moat.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Where we diverge</div><div>03 / 14</div></div>
+  </section>
+
+  <!-- ─── 4 · FIVE PRINCIPLES ───────────────────────────────── -->
+  <section data-screen-label="04 Principles">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>04 · Principles</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Five product principles</div>
+      <h2 class="display" style="max-width: 1500px;">Every feature serves at least one.</h2>
+
+      <div class="grid-5" style="margin-top: 40px;">
+        <div class="card" style="padding: 28px;">
+          <div class="meta yellow" style="color: var(--primary);">01</div>
+          <div class="h3" style="margin-top: 18px; font-size: 26px;">Be a magnet for tutors</div>
+          <div style="margin-top: 16px; font-size: 15px; color: var(--text-2); line-height: 1.5;">
+            Fast money, fast matches, reputation that compounds.
+          </div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta yellow" style="color: var(--primary);">02</div>
+          <div class="h3" style="margin-top: 18px; font-size: 26px;">Kill the leakage</div>
+          <div style="margin-top: 16px; font-size: 15px; color: var(--text-2); line-height: 1.5;">
+            Every feature makes staying easier and safer than leaving.
+          </div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta yellow" style="color: var(--primary);">03</div>
+          <div class="h3" style="margin-top: 18px; font-size: 26px;">Trust is the moat</div>
+          <div style="margin-top: 16px; font-size: 15px; color: var(--text-2); line-height: 1.5;">
+            Verification, verified reviews, accountability. Out-engineer 13 years.
+          </div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta yellow" style="color: var(--primary);">04</div>
+          <div class="h3" style="margin-top: 18px; font-size: 26px;">Hyperlocal, not Dhaka</div>
+          <div style="margin-top: 16px; font-size: 15px; color: var(--text-2); line-height: 1.5;">
+            The neighborhood is the market. Match at thana granularity.
+          </div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta yellow" style="color: var(--primary);">05</div>
+          <div class="h3" style="margin-top: 18px; font-size: 26px;">Bootstrap discipline</div>
+          <div style="margin-top: 16px; font-size: 15px; color: var(--text-2); line-height: 1.5;">
+            Prove the matching loop first. Then layer the moat.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Five principles</div><div>04 / 14</div></div>
+  </section>
+
+  <!-- ─── 5 · THE SPINE ─────────────────────────────────────── -->
+  <section data-screen-label="05 The spine">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>05 · The spine</div>
+    </div>
+
+    <div class="body" style="padding-top: 40px;">
+      <div class="eyebrow">The core flow · tutor side</div>
+      <h2 class="h2" style="max-width: 1500px;">From OTP to <em class="y">first paycheck</em> in one app.</h2>
+
+      <div class="row" style="margin-top: 24px; gap: 48px; align-items: flex-start; flex: 1; min-height: 0;">
+        <div class="ladder" style="flex: 1; gap: 10px;">
+          <div class="step" style="padding: 14px 24px;"><span class="n">01</span><span class="t" style="font-size: 22px;">OTP signup — no documents</span><span class="d">~30 sec</span></div>
+          <div class="step" style="padding: 14px 24px;"><span class="n">02</span><span class="t" style="font-size: 22px;">Profile · subjects, levels, areas</span><span class="d">~3 min</span></div>
+          <div class="step" style="padding: 14px 24px;"><span class="n">03</span><span class="t" style="font-size: 22px;">Browse live job feed</span><span class="d">immediately</span></div>
+          <div class="step" style="padding: 14px 24px; background: rgba(255,200,61,0.10); border-color: var(--primary);">
+            <span class="n yellow" style="color: var(--primary);">04</span>
+            <span class="t" style="color: var(--primary); font-size: 22px;">1-tap apply with match score</span>
+            <span class="d" style="color: var(--primary);">push + sms</span></div>
+          <div class="step" style="padding: 14px 24px;"><span class="n">05</span><span class="t" style="font-size: 22px;">Verification gate · before placement</span><span class="d">tier 1 + 2</span></div>
+          <div class="step" style="padding: 14px 24px;"><span class="n">06</span><span class="t" style="font-size: 22px;">Location unlock + Maps</span><span class="d">on approval</span></div>
+          <div class="step" style="padding: 14px 24px;"><span class="n">07</span><span class="t" style="font-size: 22px;">Trial · digital agreement</span><span class="d">in-app</span></div>
+          <div class="step" style="padding: 14px 24px; background: rgba(126,217,168,0.10); border-color: var(--accent);">
+            <span class="n" style="color: var(--accent);">08</span>
+            <span class="t" style="color: var(--accent); font-size: 22px;">Recurring payment auto-collected</span>
+            <span class="d" style="color: var(--accent);">the moat</span></div>
+        </div>
+
+        <div style="flex: 0 0 360px; display: flex; justify-content: center;">
+          <div class="phone">
+            <div class="phone-paper">
+              <div style="display:flex; justify-content:space-between; font-family:'DM Mono'; font-size:12px; color: var(--text-3);">
+                <span>9:30</span><span>● ●●● ▮▮▮</span>
+              </div>
+              <div style="margin-top: 6px;">
+                <div class="meta">Good morning, Tanvir</div>
+                <div style="font-size: 28px; font-weight: 600; letter-spacing: -0.01em; margin-top: 6px;">12 new jobs near you</div>
+              </div>
+              <div style="background: var(--ink-2); border-radius:18px; padding:16px; margin-top: 8px; border: 1px solid var(--line);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="pill y" style="font-size:10px; padding: 4px 10px;">94% match</span>
+                  <span style="font-family:'DM Mono'; font-size:10px; color: var(--text-3);">8 MIN AGO</span>
+                </div>
+                <div style="font-size: 24px; font-weight: 600; margin-top: 12px; letter-spacing: -0.01em;">Physics + Higher Math</div>
+                <div style="font-size: 13px; color: var(--text-2); margin-top: 4px;">HSC · National · Dhanmondi 27</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 14px; padding-top:12px; border-top: 1px dashed var(--line);">
+                  <span style="font-size:13px; color: var(--text-2);">Mr. Rahman</span>
+                  <span style="font-family:'DM Mono'; font-size:18px; color: var(--text); font-weight:600;">৳12,000</span>
+                </div>
+              </div>
+              <div style="background: var(--ink-2); border-radius:18px; padding:16px; border: 1px solid var(--line); opacity:0.9;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="pill" style="font-size:10px; padding: 4px 10px;">88% match</span>
+                  <span style="font-family:'DM Mono'; font-size:10px; color: var(--text-3);">32 MIN</span>
+                </div>
+                <div style="font-size: 22px; font-weight: 600; margin-top: 12px; letter-spacing: -0.01em;">Math + Physics</div>
+                <div style="font-size: 13px; color: var(--text-2); margin-top: 4px;">Class 10 · Mohammadpur</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>The core flow</div><div>05 / 14</div></div>
+  </section>
+
+  <!-- ─── 6 · VERIFICATION ──────────────────────────────────── -->
+  <section data-screen-label="06 Verification">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>06 · Trust ladder</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Verification — gated where it matters</div>
+      <h2 class="display" style="max-width: 1600px;">
+        Open to browse. <em class="y">Verified to be hired.</em>
+      </h2>
+      <p class="lede" style="max-width: 1300px;">
+        We don't gate signup with documents (the incumbent's #1 friction). We gate placement.
+        Tutors verify the moment a real job is on the line — when conversion is highest.
+      </p>
+
+      <div class="grid-4" style="margin-top: 20px;">
+        <div class="card">
+          <div class="meta">Tier 0 · Phone</div>
+          <div class="h3" style="margin-top: 14px;">Auto at signup</div>
+          <div style="font-size:15px; color: var(--text-2); margin-top:12px; line-height:1.5;">
+            OTP. Always on.
+          </div>
+          <div style="margin-top:20px;"><span class="pill a">Done</span></div>
+        </div>
+        <div class="card">
+          <div class="meta">Tier 1 · National ID</div>
+          <div class="h3" style="margin-top: 14px;">Porichoy lookup</div>
+          <div style="font-size:15px; color: var(--text-2); margin-top:12px; line-height:1.5;">
+            Identity confirmed against govt registry.
+          </div>
+          <div style="margin-top:20px;"><span class="pill a">Done</span></div>
+        </div>
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent;">
+          <div class="meta" style="color: rgba(15,15,15,0.6);">Tier 2 · Education</div>
+          <div class="h3" style="margin-top: 14px; font-weight:700;">Student ID + board result</div>
+          <div style="font-size:15px; color: rgba(15,15,15,0.75); margin-top:12px; line-height:1.5;">
+            <strong>Required before placement.</strong>
+          </div>
+          <div style="margin-top:20px;"><span class="pill" style="background: rgba(15,15,15,0.12); color: var(--ink); border-color: transparent;">Gating step</span></div>
+        </div>
+        <div class="card">
+          <div class="meta">Tier 3 · Reference</div>
+          <div class="h3" style="margin-top: 14px;">Manual review</div>
+          <div style="font-size:15px; color: var(--text-2); margin-top:12px; line-height:1.5;">
+            Unlocks ৳15k+ premium placements.
+          </div>
+          <div style="margin-top:20px;"><span class="pill">Premium tier</span></div>
+        </div>
+      </div>
+
+      <div class="card paper" style="margin-top: 8px; padding: 28px; display:flex; align-items:center; gap: 28px;">
+        <div style="font-size: 80px; font-weight: 700; letter-spacing: -0.03em; color: var(--paper-ink); line-height: 1;">3.4×</div>
+        <div style="font-size: 22px; line-height: 1.4; color: rgba(15,15,15,0.78);">
+          Verified tutors are <strong>3.4× more likely to be shortlisted</strong> — voluntary climbing, no signup friction.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Verification engine</div><div>06 / 14</div></div>
+  </section>
+
+  <!-- ─── 7 · DEMAND HEATMAP ────────────────────────────────── -->
+  <section data-screen-label="07 Demand heatmap">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>07 · Demand near you</div>
+    </div>
+
+    <div class="body">
+      <div class="grid-2" style="gap: 56px; align-items: stretch;">
+        <div style="display:flex; flex-direction:column; gap: 28px;">
+          <div class="eyebrow">Demand-side intelligence</div>
+          <h2 class="display" style="font-size: 92px;">One data layer.<br><em class="y">Two audiences.</em></h2>
+          <p class="lede">
+            Tutors see where requests cluster and which subjects are trending in real time — so they
+            pick service areas that actually fill. Same heatmap drives ops decisions on
+            where to acquire and where to run campaigns.
+          </p>
+
+          <div style="display:flex; gap: 12px; flex-wrap: wrap; margin-top: 12px;">
+            <span class="pill y">Live density</span>
+            <span class="pill">Subject trends</span>
+            <span class="pill">Under-served pockets</span>
+            <span class="pill">CRM signal</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="meta">This week · Dhanmondi cluster</div>
+            <div class="pill" style="font-size: 11px;">Live</div>
+          </div>
+
+          <svg viewBox="0 0 700 460" style="width:100%; height: 420px; border-radius: 18px; background: var(--ink-2);">
+            <defs>
+              <radialGradient id="h1"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.9"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+              <radialGradient id="h2"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.7"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+              <radialGradient id="h3"><stop offset="0%" stop-color="#FFC83D" stop-opacity="0.5"/><stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/></radialGradient>
+            </defs>
+            <g stroke="rgba(255,255,255,0.06)" stroke-width="1">
+              <line x1="0" y1="100" x2="700" y2="105"/>
+              <line x1="0" y1="200" x2="700" y2="195"/>
+              <line x1="0" y1="300" x2="700" y2="305"/>
+              <line x1="120" y1="0" x2="125" y2="460"/>
+              <line x1="280" y1="0" x2="275" y2="460"/>
+              <line x1="440" y1="0" x2="445" y2="460"/>
+              <line x1="600" y1="0" x2="595" y2="460"/>
+            </g>
+            <path d="M0 230 C 200 200, 350 280, 700 220" stroke="rgba(255,255,255,0.15)" stroke-width="4" fill="none"/>
+            <path d="M320 0 C 350 150, 280 320, 350 460" stroke="rgba(255,255,255,0.15)" stroke-width="4" fill="none"/>
+
+            <circle cx="310" cy="160" r="140" fill="url(#h1)"/>
+            <circle cx="380" cy="230" r="110" fill="url(#h2)"/>
+            <circle cx="200" cy="170" r="100" fill="url(#h3)"/>
+            <circle cx="170" cy="290" r="90" fill="url(#h3)"/>
+
+            <g transform="translate(310, 160)">
+              <circle r="6" fill="#FFC83D"/>
+              <text y="-22" text-anchor="middle" font-family="DM Mono" font-size="11" letter-spacing="0.1em" fill="#fff">18 REQ</text>
+              <text y="26" text-anchor="middle" font-family="DM Sans" font-size="14" font-weight="600" fill="#fff">Dhanmondi 27</text>
+            </g>
+            <g transform="translate(380, 230)">
+              <circle r="5" fill="#FFC83D"/>
+              <text y="-18" text-anchor="middle" font-family="DM Mono" font-size="10" letter-spacing="0.1em" fill="#fff">14</text>
+              <text y="24" text-anchor="middle" font-family="DM Sans" font-size="13" font-weight="600" fill="#fff">Dhanmondi 15</text>
+            </g>
+            <g transform="translate(200, 170)">
+              <circle r="5" fill="#FFC83D"/>
+              <text y="-18" text-anchor="middle" font-family="DM Mono" font-size="10" letter-spacing="0.1em" fill="#fff">11</text>
+              <text y="24" text-anchor="middle" font-family="DM Sans" font-size="13" font-weight="600" fill="#fff">Lalmatia</text>
+            </g>
+            <g transform="translate(170, 290)">
+              <circle r="5" fill="#FFC83D"/>
+              <text y="24" text-anchor="middle" font-family="DM Sans" font-size="13" font-weight="600" fill="#fff">Mohammadpur</text>
+            </g>
+
+            <g transform="translate(440, 360)">
+              <circle r="9" fill="#fff" stroke="#FFC83D" stroke-width="3"/>
+              <rect x="14" y="-9" width="44" height="18" rx="4" fill="#fff"/>
+              <text x="36" y="4" text-anchor="middle" font-family="DM Mono" font-size="10" fill="#0F0F0F" font-weight="600">YOU</text>
+            </g>
+          </svg>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+            <div><div style="font-size: 32px; font-weight: 600; letter-spacing: -0.02em;">71</div><div class="meta">Open jobs</div></div>
+            <div><div style="font-size: 32px; font-weight: 600; letter-spacing: -0.02em;">14</div><div class="meta">In your areas</div></div>
+            <div><div style="font-size: 32px; font-weight: 600; letter-spacing: -0.02em;">৳8.7k</div><div class="meta">Median pay</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Demand intelligence</div><div>07 / 14</div></div>
+  </section>
+
+  <!-- ─── 8 · PRIVACY LOCATION ──────────────────────────────── -->
+  <section data-screen-label="08 Location privacy">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>08 · Location privacy</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Privacy-controlled location reveal</div>
+      <h2 class="display" style="max-width: 1600px;">A guardian's address is <em class="y">never exposed</em> to strangers.</h2>
+
+      <div class="grid-3" style="margin-top: 32px;">
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:48px; height:48px; border-radius:14px; background: rgba(255,200,61,0.14); display:flex; align-items:center; justify-content:center;">
+              <svg class="ico ico-lg" viewBox="0 0 24 24" style="color: var(--primary);"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
+            </div>
+            <div class="meta">01 · Posted</div>
+          </div>
+          <div class="h3" style="margin-top: 20px;">Fuzzed publicly</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Tutors see area, landmark, and an approximate pin. Enough to estimate commute, not enough to find the home.
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:48px; height:48px; border-radius:14px; background: rgba(255,200,61,0.14); display:flex; align-items:center; justify-content:center;">
+              <svg class="ico ico-lg" viewBox="0 0 24 24" style="color: var(--primary);"><path d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            </div>
+            <div class="meta">02 · Requested</div>
+          </div>
+          <div class="h3" style="margin-top: 20px;">One-tap approval</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Guardian grants access to one tutor — or all shortlisted at once. Scoped to that single job.
+          </div>
+        </div>
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:48px; height:48px; border-radius:14px; background: rgba(15,15,15,0.1); display:flex; align-items:center; justify-content:center;">
+              <svg class="ico ico-lg" viewBox="0 0 24 24" style="color: var(--ink);"><path d="M12 2l9 19-9-5-9 5z"/></svg>
+            </div>
+            <div class="meta" style="color: rgba(15,15,15,0.6);">03 · Unlocked</div>
+          </div>
+          <div class="h3" style="margin-top: 20px; font-weight: 700;">Exact pin + Google Maps</div>
+          <div style="font-size: 16px; color: rgba(15,15,15,0.78); margin-top: 12px; line-height: 1.5;">
+            Turn-by-turn navigation in-app. Auto-revoked if not hired. Logged for safety.
+          </div>
+        </div>
+      </div>
+
+      <div class="card paper" style="padding: 28px;">
+        <div style="display:flex; align-items:center; gap: 28px;">
+          <div class="meta">Why it matters</div>
+          <div style="font-size: 22px; color: var(--paper-ink); line-height: 1.4; font-weight: 500; flex: 1;">
+            Three features in one — <em class="y" style="color: #b8861f;">safety</em>, <em class="y" style="color: #b8861f;">anti-leakage</em>
+            (navigation lives in-app), and a <em class="y" style="color: #b8861f;">trust signal</em> for anxious guardians.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Location · Privacy</div><div>08 / 14</div></div>
+  </section>
+
+  <!-- ─── 9 · THE MOAT ──────────────────────────────────────── -->
+  <section data-screen-label="09 The moat">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>09 · The moat</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Anti-disintermediation</div>
+      <h2 class="display" style="max-width: 1700px;">
+        We don't lock you in. We make <em class="y">staying better</em> than leaving.
+      </h2>
+
+      <div class="grid-3" style="margin-top: 24px;">
+        <div class="card">
+          <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Recurring auto-collection</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Removes the awkward monthly "please pay me" ask. Tutors get paid on time, every time.
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Payment protection</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Attendance-linked guarantee — only available on-platform. Cash deal? You're on your own.
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Verified reputation</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Accrues from confirmed, paid tuitions. The asset they'd forfeit by going informal.
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Replacement guarantee</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            Not happy with the trial? Free replacement. Removes the default to the informal market.
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">Masked comms</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 12px; line-height: 1.5;">
+            No raw phone number exchange. Safety + anti-leakage in one mechanism.
+          </div>
+        </div>
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent;">
+          <div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">Verified income proof</div>
+          <div style="font-size: 16px; color: rgba(15,15,15,0.78); margin-top: 12px; line-height: 1.5;">
+            Formal receipts the informal market can't produce. Basis for future lending products.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Anti-disintermediation</div><div>09 / 14</div></div>
+  </section>
+
+  <!-- ─── 10 · PHASING ──────────────────────────────────────── -->
+  <section data-screen-label="10 Phasing">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>10 · Roadmap</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Phasing</div>
+      <h2 class="display" style="max-width: 1600px;">
+        Prove the loop. <em class="y">Then layer the moat.</em>
+      </h2>
+
+      <div class="grid-3" style="margin-top: 36px;">
+        <div class="card" style="display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div class="meta">V1 · MVP</div>
+            <div style="font-family:'DM Mono'; font-size: 13px; color: var(--primary); letter-spacing:0.1em;">NOW → Q3</div>
+          </div>
+          <div class="h3" style="margin-top: 16px;">Prove the matching loop</div>
+          <div style="margin-top: 20px; font-size: 15px; line-height: 1.6; color: var(--text-2);">
+            Tutor: easy signup, live feed, 1-tap apply, tiers 0–2, basic reputation, masked chat.<br><br>
+            Guardian: post, applicants, shortlist, location grant, trial, digital agreement.<br><br>
+            Money: placement fee + trial/first month on-platform (habit seed).
+          </div>
+        </div>
+
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div class="meta" style="color: rgba(15,15,15,0.6);">V2 · Moat</div>
+            <div style="font-family:'DM Mono'; font-size: 13px; color: var(--ink); letter-spacing:0.1em;">Q4 → 2027</div>
+          </div>
+          <div class="h3" style="margin-top: 16px; font-weight: 700;">Build the moat</div>
+          <div style="margin-top: 20px; font-size: 15px; line-height: 1.6; color: rgba(15,15,15,0.78);">
+            Recurring auto-billing, wallet, escrow hold-and-release, payment protection,
+            attendance → payment linkage, replacement guarantee, tutor tiers/levels,
+            masked calling, progress reports, full demand heatmap.
+          </div>
+        </div>
+
+        <div class="card" style="display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:baseline;">
+            <div class="meta">V3 · Scale</div>
+            <div style="font-family:'DM Mono'; font-size: 13px; color: var(--text-3); letter-spacing:0.1em;">2027+</div>
+          </div>
+          <div class="h3" style="margin-top: 16px;">Monetize deeper</div>
+          <div style="margin-top: 20px; font-size: 15px; line-height: 1.6; color: var(--text-2);">
+            Fintech: tutor income-based lending, guardian installments, tutor insurance.<br><br>
+            Verticals: English-medium, admission cramming, special needs.<br><br>
+            Formats: group, online, diaspora. B2B with coaching centers.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Roadmap</div><div>10 / 14</div></div>
+  </section>
+
+  <!-- ─── 11 · MONETIZATION ─────────────────────────────────── -->
+  <section data-screen-label="11 Monetization">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>11 · Revenue lines</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">Monetization, mapped to phasing</div>
+      <h2 class="display" style="max-width: 1600px;">Six revenue lines. <em class="y">Three phases.</em></h2>
+
+      <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
+        <table style="width:100%; border-collapse: collapse; font-size: 20px;">
+          <thead>
+            <tr style="background: rgba(255,255,255,0.03);">
+              <th style="text-align:left; padding: 22px 32px; font-family:'DM Mono'; font-size: 12px; letter-spacing: 0.14em; color: var(--text-3); text-transform: uppercase; font-weight: 500;">Stage</th>
+              <th style="text-align:left; padding: 22px 24px; font-family:'DM Mono'; font-size: 12px; letter-spacing: 0.14em; color: var(--text-3); text-transform: uppercase; font-weight: 500;">Revenue line</th>
+              <th style="text-align:left; padding: 22px 24px; font-family:'DM Mono'; font-size: 12px; letter-spacing: 0.14em; color: var(--text-3); text-transform: uppercase; font-weight: 500;">Enabled by</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-top: 1px solid var(--line);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--text-3); letter-spacing: 0.06em;">V1</td>
+              <td style="padding: 22px 24px; font-weight: 500;">Tutor placement fee</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">Matching + digital agreement</td>
+            </tr>
+            <tr style="border-top: 1px solid var(--line);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--text-3); letter-spacing: 0.06em;">V1</td>
+              <td style="padding: 22px 24px; font-weight: 500;">Trial / first-month txn margin</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">Payment layer (lean)</td>
+            </tr>
+            <tr style="border-top: 1px solid var(--line); background: rgba(255,200,61,0.05);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--primary); letter-spacing: 0.06em;">V2</td>
+              <td style="padding: 22px 24px; font-weight: 600; color: var(--primary);">Recurring % of tuition (GMV)</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">On-platform recurring payments · <strong>the moat</strong></td>
+            </tr>
+            <tr style="border-top: 1px solid var(--line);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--text-3); letter-spacing: 0.06em;">V2</td>
+              <td style="padding: 22px 24px; font-weight: 500;">Payment-protection fee</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">Escrow + attendance linkage</td>
+            </tr>
+            <tr style="border-top: 1px solid var(--line);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--text-3); letter-spacing: 0.06em;">V3</td>
+              <td style="padding: 22px 24px; font-weight: 500;">Lending / installment margin</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">Wallet + verified income data</td>
+            </tr>
+            <tr style="border-top: 1px solid var(--line);">
+              <td style="padding: 22px 32px; font-family:'DM Mono'; font-size: 14px; color: var(--text-3); letter-spacing: 0.06em;">V3</td>
+              <td style="padding: 22px 24px; font-weight: 500;">Premium verification, featured listings, B2B</td>
+              <td style="padding: 22px 24px; color: var(--text-2);">Verification + ranking + scale</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer"><div>Monetization</div><div>11 / 14</div></div>
+  </section>
+
+  <!-- ─── 12 · GO TO MARKET ─────────────────────────────────── -->
+  <section data-screen-label="12 GTM">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>12 · Cold start</div>
+    </div>
+
+    <div class="body">
+      <div class="grid-2" style="gap: 56px; align-items: stretch;">
+        <div style="display:flex; flex-direction:column; gap: 28px;">
+          <div class="eyebrow">Cold start · supply first</div>
+          <h2 class="display" style="font-size: 92px;">Two clusters.<br><em class="y">Sequenced, not split.</em></h2>
+          <p class="lede">
+            One area in DNCC, one in DSCC. We need tutor density before opening the demand floodgates.
+            Hyperlocal liquidity is the whole game.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap: 16px; margin-top: 12px;">
+            <div style="display:flex; align-items:center; gap: 18px;">
+              <div style="width:14px; height:14px; border-radius:7px; background: var(--primary);"></div>
+              <div style="font-size: 20px; font-weight: 500;">DNCC · Dhanmondi cluster</div>
+              <div style="margin-left:auto; font-family:'DM Mono'; color: var(--text-3); font-size: 14px; letter-spacing: 0.1em;">MONTH 1</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 18px;">
+              <div style="width:14px; height:14px; border-radius:7px; background: rgba(255,200,61,0.3); border: 2px solid var(--primary);"></div>
+              <div style="font-size: 20px; font-weight: 500;">DSCC · Dhanmondi-South extension</div>
+              <div style="margin-left:auto; font-family:'DM Mono'; color: var(--text-3); font-size: 14px; letter-spacing: 0.1em;">MONTH 4</div>
+            </div>
+            <div style="display:flex; align-items:center; gap: 18px;">
+              <div style="width:14px; height:14px; border-radius:7px; background: transparent; border: 2px dashed var(--text-3);"></div>
+              <div style="font-size: 20px; font-weight: 500; color: var(--text-2);">Mirpur · Uttara · expansion</div>
+              <div style="margin-left:auto; font-family:'DM Mono'; color: var(--text-3); font-size: 14px; letter-spacing: 0.1em;">2027</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap: 24px;">
+          <div class="card" style="padding: 32px;">
+            <div class="meta">Supply playbook</div>
+            <div class="h3" style="margin-top: 12px;">University CRM</div>
+            <div style="font-size:16px; color: var(--text-2); line-height: 1.5; margin-top: 12px;">
+              BUET, DU, NSU, BRACU campus reps. Referral bonuses on first-completed-month.
+              Manual onboarding calls — do things that don't scale.
+            </div>
+          </div>
+          <div class="card" style="padding: 32px;">
+            <div class="meta">Demand playbook</div>
+            <div class="h3" style="margin-top: 12px;">Apartment building partnerships</div>
+            <div style="font-size:16px; color: var(--text-2); line-height: 1.5; margin-top: 12px;">
+              Door-to-door in target clusters. Mother-of-mother referrals.
+              Posters at coaching centers (frenemy strategy).
+            </div>
+          </div>
+          <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent; padding: 32px;">
+            <div class="meta" style="color: rgba(15,15,15,0.6);">Target by month 6</div>
+            <div style="display: flex; gap: 36px; margin-top: 16px;">
+              <div>
+                <div style="font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">1,200</div>
+                <div class="meta" style="color: rgba(15,15,15,0.6); margin-top: 6px;">Verified tutors</div>
+              </div>
+              <div>
+                <div style="font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1;">350</div>
+                <div class="meta" style="color: rgba(15,15,15,0.6); margin-top: 6px;">Active placements</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Go-to-market</div><div>12 / 14</div></div>
+  </section>
+
+  <!-- ─── 13 · METRICS ──────────────────────────────────────── -->
+  <section data-screen-label="13 Metrics">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>13 · Instrumentation</div>
+    </div>
+
+    <div class="body">
+      <div class="eyebrow">From day one</div>
+      <h2 class="display" style="max-width: 1600px;">Measure the <em class="y">money flow,</em> not just the match.</h2>
+
+      <div class="grid-4" style="margin-top: 30px;">
+        <div class="card" style="padding: 28px;">
+          <div class="meta">Supply</div>
+          <div class="num-md" style="margin-top: 14px;">8.2k</div>
+          <div style="font-size: 14px; color: var(--text-2); margin-top: 8px;">Tutor signups / mo</div>
+          <div style="font-family:'DM Mono'; font-size:12px; color: var(--accent); margin-top: 12px; letter-spacing: 0.06em;">▲ 24% mom</div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta">Liquidity</div>
+          <div class="num-md" style="margin-top: 14px;">4.3<span style="font-size:32px; color: var(--text-3);"> dys</span></div>
+          <div style="font-size: 14px; color: var(--text-2); margin-top: 8px;">Time to confirm</div>
+          <div style="font-family:'DM Mono'; font-size:12px; color: var(--accent); margin-top: 12px; letter-spacing: 0.06em;">▼ from 21 dys</div>
+        </div>
+        <div class="card" style="background: var(--primary); color: var(--ink); border-color: transparent; padding: 28px;">
+          <div class="meta" style="color: rgba(15,15,15,0.6);">North star</div>
+          <div class="num-md" style="margin-top: 14px;">63<span style="font-size:32px; color: rgba(15,15,15,0.6);">%</span></div>
+          <div style="font-size: 14px; color: rgba(15,15,15,0.78); margin-top: 8px; font-weight: 500;">On-platform GMV share</div>
+          <div style="font-family:'DM Mono'; font-size:12px; color: var(--ink); margin-top: 12px; letter-spacing: 0.06em; opacity: 0.7;">INVERSE OF LEAKAGE</div>
+        </div>
+        <div class="card" style="padding: 28px;">
+          <div class="meta">Quality</div>
+          <div class="num-md" style="margin-top: 14px;">11<span style="font-size:32px; color: var(--text-3);"> mo</span></div>
+          <div style="font-size: 14px; color: var(--text-2); margin-top: 8px;">Median student retention</div>
+          <div style="font-family:'DM Mono'; font-size:12px; color: var(--accent); margin-top: 12px; letter-spacing: 0.06em;">Incumbent: ~6 mo</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px;">
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Verification-completion rate</div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Applications per job</div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Recurring-payment retention</div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Tutor retention (12 mo)</div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Dispute rate</div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 14px; padding: 18px 22px; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--line);">
+          <div style="width:8px; height:8px; border-radius:4px; background: var(--primary);"></div>
+          <div style="font-size: 16px; color: var(--text-2);">Referral rate · vs incumbent's 20%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"><div>Instrumentation</div><div>13 / 14</div></div>
+  </section>
+
+  <!-- ─── 14 · ASK ──────────────────────────────────────────── -->
+  <section data-screen-label="14 Close">
+    <div class="header">
+      <div class="wm"><div class="dot"></div><b>Tution<span class="yellow">.</span>media</b></div>
+      <div>14 · Close</div>
+    </div>
+
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap: 60px; padding: 80px 0;">
+      <div class="eyebrow">Why us · why now</div>
+      <h1 class="display-tight">
+        We out-engineer 13 years of inertia by<br>
+        owning what the incumbent <em class="y">never bothered</em> to.
+      </h1>
+
+      <div class="grid-3" style="margin-top: 40px;">
+        <div>
+          <div class="meta">Round size</div>
+          <div class="num-md" style="margin-top: 12px;">$650k</div>
+          <div style="font-size: 16px; color: var(--text-2); margin-top: 10px; line-height: 1.5;">
+            18-month runway through V2 launch + 2 Dhaka clusters.
+          </div>
+        </div>
+        <div>
+          <div class="meta">Use of funds</div>
+          <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; font-size: 17px;">
+            <div style="display:flex; justify-content:space-between;"><span>Engineering</span><span style="font-family:'DM Mono'; color: var(--primary); font-weight:500;">42%</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Ops &amp; CRM</span><span style="font-family:'DM Mono'; color: var(--primary); font-weight:500;">28%</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Marketing</span><span style="font-family:'DM Mono'; color: var(--primary); font-weight:500;">18%</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Payment / legal</span><span style="font-family:'DM Mono'; color: var(--primary); font-weight:500;">12%</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="meta">Next 6 months</div>
+          <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 17px; color: var(--text-2); line-height: 1.5;">
+            <div>· Ship V1 in 2 clusters</div>
+            <div>· 1,200 verified tutors</div>
+            <div>· 350 active placements</div>
+            <div>· Validate ৳-recurring pilot</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap: 16px; margin-top: 24px;">
+        <span class="pill y" style="font-size: 16px; padding: 12px 22px;">Let's talk</span>
+        <span style="font-family:'DM Mono'; font-size: 16px; color: var(--text-2); letter-spacing: 0.06em;">founders@tution.media · +880 1712 048 391</span>
+      </div>
+    </div>
+
+    <div class="footer"><div>Confidential · Tution Media</div><div>14 / 14</div></div>
+  </section>
+
+</deck-stage>
+
+<script src="deck-stage.js"></script>
+
+</body>
+</html>
