@@ -35,6 +35,11 @@ function MiniApp({ initial = 'feed', palette = 'clay' }) {
     schedule: ScreenSchedule,
     chat: ScreenChat,
     reputation: ScreenReputation,
+    // guardian side
+    'g-home': GuardianHome,
+    'g-applicants': GuardianApplicants,
+    'g-tutor': GuardianTutorDetail,
+    'g-hire': GuardianHire,
   };
 
   const Comp = screens[route] || ScreenFeed;
@@ -134,6 +139,22 @@ function App() {
           </DCArtboard>
           <DCArtboard id="chat" label="Masked inbox" width={464} height={944}>
             <MiniApp initial="chat" palette={p}/>
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection id="guardian" title="Guardian view"
+          subtitle="The other side of the marketplace. Post a requirement, review applicants, shortlist, grant location, trial → hire.">
+          <DCArtboard id="g-home" label="Guardian dashboard" width={464} height={944}>
+            <MiniApp initial="g-home" palette={p}/>
+          </DCArtboard>
+          <DCArtboard id="g-applicants" label="Applicants · shortlist" width={464} height={944}>
+            <MiniApp initial="g-applicants" palette={p}/>
+          </DCArtboard>
+          <DCArtboard id="g-tutor" label="Tutor detail · match" width={464} height={944}>
+            <MiniApp initial="g-tutor" palette={p}/>
+          </DCArtboard>
+          <DCArtboard id="g-hire" label="Trial → hire" width={464} height={944}>
+            <MiniApp initial="g-hire" palette={p}/>
           </DCArtboard>
         </DCSection>
       </DesignCanvas>

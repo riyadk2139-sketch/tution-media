@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <title>Tution Media · Tutor app</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FFC83D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; background: #f0eee9; }
   /* Pre-load fonts to reduce FOUT inside artboards */
@@ -29,13 +34,21 @@
 <script type="text/babel" src="src/design-canvas.jsx"></script>
 <script type="text/babel" src="src/tweaks-panel.jsx"></script>
 
-<!-- screens -->
+<!-- screens — tutor side -->
 <script type="text/babel" src="src/screens-a.jsx"></script>
 <script type="text/babel" src="src/screens-b.jsx"></script>
 <script type="text/babel" src="src/screens-c.jsx"></script>
 
+<!-- screens — guardian side -->
+<script type="text/babel" src="src/screens-guardian.jsx"></script>
+
 <!-- app -->
 <script type="text/babel" src="src/app.jsx"></script>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
 </body>
 </html>
