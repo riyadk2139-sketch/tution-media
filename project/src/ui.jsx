@@ -8,7 +8,7 @@ const RouterCtx = React.createContext({ go: () => {}, route: 'feed', back: () =>
 
 // ─── Icon set ────────────────────────────────────────────────
 // Single-thickness, rounded line icons. All stroke="currentColor".
-const Icon = ({ name, size = 20, stroke = 1.6 }) => {
+const Icon = ({ name, size = 20, stroke = 1.6, fill }) => {
   const paths = {
     home:        <><path d="M4 11L12 4l8 7"/><path d="M6 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9"/></>,
     feed:        <><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></>,
@@ -61,7 +61,7 @@ const Icon = ({ name, size = 20, stroke = 1.6 }) => {
     layers:      <><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/></>,
   };
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={fill || "none"}
       stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
       style={{ display: 'block', flexShrink: 0 }}>
       {paths[name] || <circle cx="12" cy="12" r="3"/>}

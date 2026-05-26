@@ -109,46 +109,58 @@ const ScreenSchedule = () => {
   );
 };
 
-const ClassCard = ({ c, first, muted }) => (
-  <Card pad={0} style={{ overflow: 'hidden', opacity: muted ? 0.85 : 1 }}>
-    <div style={{ display: 'flex', gap: 14, padding: '14px 16px' }}>
-      <div style={{
-        width: 56, textAlign: 'center', padding: '6px 0', borderRadius: 10,
-        background: first ? 'var(--tm-primary-soft)' : 'var(--tm-paper-deep)',
-        color: first ? 'var(--tm-primary-deep)' : 'var(--tm-ink-soft)',
-        display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0,
-      }}>
-        <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 18, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-          {c.time.replace(/(am|pm)/, '')}
+const ClassCard = ({ c, first, muted }) => {
+  const [attended, setAttended] = React.useState(false);
+  return (
+    <Card pad={0} style={{ overflow: 'hidden', opacity: muted ? 0.85 : 1 }}>
+      <div style={{ display: 'flex', gap: 14, padding: '14px 16px' }}>
+        <div style={{
+          width: 56, textAlign: 'center', padding: '6px 0', borderRadius: 10,
+          background: first ? 'var(--tm-primary-soft)' : 'var(--tm-paper-deep)',
+          color: first ? 'var(--tm-primary-deep)' : 'var(--tm-ink-soft)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 18, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+            {c.time.replace(/(am|pm)/, '')}
+          </div>
+          <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4, opacity: 0.8 }}>
+            {c.time.match(/(am|pm)/)?.[0] || ''} · {c.dur}
+          </div>
         </div>
-        <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 4, opacity: 0.8 }}>
-          {c.time.match(/(am|pm)/)?.[0] || ''} · {c.dur}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{c.student}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--tm-ink-soft)', marginTop: 3 }}>
+            {c.subject}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 11.5, color: 'var(--tm-ink-muted)' }}>
+            <Icon name="pin" size={12}/> {c.area}
+            <span style={{ opacity: 0.6, margin: '0 6px' }}>·</span>
+            <span style={{ fontFamily: 'var(--tm-font-mono)' }}>৳{c.payPerClass} / class</span>
+          </div>
         </div>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{c.student}</div>
-        <div style={{ fontSize: 12.5, color: 'var(--tm-ink-soft)', marginTop: 3 }}>
-          {c.subject}
+      {first && (
+        <div style={{
+          borderTop: '1px dashed var(--tm-line)', padding: '12px 16px',
+          background: 'var(--tm-paper)', display: 'flex', gap: 8, alignItems: 'center',
+        }}>
+          <Button variant="secondary" size="sm" icon="nav">Navigate</Button>
+          <div style={{ flex: 1 }}/>
+          {attended ? (
+            <Button variant="secondary" size="sm" icon="checkCircle"
+              style={{ color: 'var(--tm-accent)', borderColor: 'var(--tm-accent-soft)' }}>
+              Attended ✓
+            </Button>
+          ) : (
+            <Button size="sm" icon="check" onClick={() => setAttended(true)}>
+              Mark attended
+            </Button>
+          )}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 11.5, color: 'var(--tm-ink-muted)' }}>
-          <Icon name="pin" size={12}/> {c.area}
-          <span style={{ opacity: 0.6, margin: '0 6px' }}>·</span>
-          <span style={{ fontFamily: 'var(--tm-font-mono)' }}>৳{c.payPerClass} / class</span>
-        </div>
-      </div>
-    </div>
-    {first && (
-      <div style={{
-        borderTop: '1px dashed var(--tm-line)', padding: '12px 16px',
-        background: 'var(--tm-paper)', display: 'flex', gap: 8, alignItems: 'center',
-      }}>
-        <Button variant="secondary" size="sm" icon="nav">Navigate</Button>
-        <div style={{ flex: 1 }}/>
-        <Button size="sm" icon="check">Mark attended</Button>
-      </div>
-    )}
-  </Card>
-);
+      )}
+    </Card>
+  );
+};
 
 // ─── 9. Masked Chat ──────────────────────────────────────────
 const ScreenChat = () => {
@@ -480,9 +492,12 @@ const ScreenReputation = () => {
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--tm-ink)' }}>{r.from}</span>
                 <Icon name="checkCircle" size={13} stroke={2.2}/>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {Array.from({length: 5}).map((_, i) => (
-                  <Icon key={i} name="star" size={12} stroke={0}/>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2, color: 'var(--tm-primary)' }}>
+                {Array.from({length: r.rating}).map((_, i) => (
+                  <Icon key={i} name="star" size={12} stroke={0} fill="currentColor"/>
+                ))}
+                {Array.from({length: 5 - r.rating}).map((_, i) => (
+                  <Icon key={`e${i}`} name="star" size={12} stroke={1.4}/>
                 ))}
               </div>
             </div>

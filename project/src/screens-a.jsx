@@ -5,7 +5,23 @@
 const ScreenOnboarding = () => {
   const { go } = React.useContext(RouterCtx);
   const [step, setStep] = React.useState('phone'); // phone | otp
-  const otpDigits = ['4','2','7','9','—','—'];
+  const [otpDigits, setOtpDigits] = React.useState(['4','2','7','9','—','—']);
+  const [autoFilling, setAutoFilling] = React.useState(false);
+
+  // Simulate OTP auto-fill when landing on OTP step
+  React.useEffect(() => {
+    if (step !== 'otp' || autoFilling) return;
+    setAutoFilling(true);
+    const fill = ['4','2','7','9','8','3'];
+    let i = 4;
+    const tick = () => {
+      if (i >= fill.length) return;
+      setOtpDigits(fill.slice(0, i + 1).concat(Array(6 - i - 1).fill('—')));
+      i++;
+      setTimeout(tick, 300);
+    };
+    setTimeout(tick, 600);
+  }, [step]);
 
   return (
     <Phone palette={undefined} noTab>
@@ -91,15 +107,20 @@ const ScreenOnboarding = () => {
               textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
             }}>Verify code · +880 1712 048 391</label>
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              {otpDigits.map((d, i) => (
-                <div key={i} style={{
-                  flex: 1, aspectRatio: '1 / 1.15',
-                  background: d !== '—' ? 'var(--tm-surface)' : 'var(--tm-paper-deep)',
-                  border: '1px solid ' + (i === 4 ? 'var(--tm-primary)' : 'var(--tm-line)'),
-                  borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)',
-                }}>{d !== '—' ? d : ''}</div>
-              ))}
+              {otpDigits.map((d, i) => {
+                const filled = d !== '—';
+                const isActive = !filled && otpDigits[i - 1] !== '—';
+                return (
+                  <div key={i} style={{
+                    flex: 1, aspectRatio: '1 / 1.15',
+                    background: filled ? 'var(--tm-surface)' : 'var(--tm-paper-deep)',
+                    border: '1px solid ' + (isActive ? 'var(--tm-primary)' : filled ? 'var(--tm-line)' : 'var(--tm-line)'),
+                    borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)',
+                    transition: 'background .15s, border-color .15s',
+                  }}>{filled ? d : isActive ? <span style={{ display: 'inline-block', width: 2, height: 20, background: 'var(--tm-primary)', animation: 'tm-blink 1s infinite' }}/> : ''}</div>
+                );
+              })}
             </div>
             <p style={{ marginTop: 14, fontSize: 12, color: 'var(--tm-ink-muted)' }}>
               Didn't get it? <Link>Resend in 32s</Link>
@@ -121,19 +142,19 @@ const ScreenOnboarding = () => {
 // ─── 2. Profile builder ──────────────────────────────────────
 const ScreenProfile = () => {
   const subjectsAll = ['Physics', 'Math', 'Higher Math', 'Chemistry', 'Biology', 'English', 'ICT', 'Bangla', 'Accounting', 'Economics'];
-  const selected = new Set(['Physics', 'Math', 'Higher Math', 'Chemistry']);
-  const levels = [
+  const [selected, setSelected] = React.useState(new Set(['Physics', 'Math', 'Higher Math', 'Chemistry']));
+  const [levels, setLevels] = React.useState([
     { l: 'Class 6–8', on: false },
     { l: 'Class 9–10 / SSC', on: true },
     { l: 'HSC', on: true },
     { l: 'O-Level / A-Level', on: true },
     { l: 'University', on: false },
-  ];
+  ]);
   const days = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
   const slots = ['Morning','Afternoon','Evening','Night'];
-  const availability = [
+  const [availability, setAvailability] = React.useState([
     [0,0,1,1],[0,0,1,1],[0,1,1,1],[0,1,1,0],[0,1,1,1],[0,1,1,0],[1,1,0,0],
-  ];
+  ]);
 
   return (
     <Phone>
@@ -171,12 +192,17 @@ const ScreenProfile = () => {
         {subjectsAll.map(s => {
           const on = selected.has(s);
           return (
-            <div key={s} style={{
+            <div key={s} onClick={() => setSelected(prev => {
+              const next = new Set(prev);
+              if (next.has(s)) next.delete(s); else next.add(s);
+              return next;
+            })} style={{
               padding: '8px 14px', borderRadius: 999,
               background: on ? 'var(--tm-ink)' : 'transparent',
               color: on ? 'var(--tm-paper)' : 'var(--tm-ink-soft)',
               border: `1px solid ${on ? 'var(--tm-ink)' : 'var(--tm-line)'}`,
               fontSize: 13, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6,
+              cursor: 'pointer', userSelect: 'none', transition: 'background .15s, color .15s',
             }}>
               {on && <Icon name="check" size={12} stroke={2.4}/>}
               {s}
@@ -188,12 +214,13 @@ const ScreenProfile = () => {
       {/* Levels */}
       <SectionLabel>Levels</SectionLabel>
       <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {levels.map(l => (
-          <div key={l.l} style={{
+        {levels.map((l, i) => (
+          <div key={l.l} onClick={() => setLevels(prev => prev.map((x, j) => j === i ? {...x, on: !x.on} : x))} style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '12px 14px', borderRadius: 12,
             background: l.on ? 'var(--tm-primary-soft)' : 'var(--tm-surface)',
             border: `1px solid ${l.on ? 'transparent' : 'var(--tm-line)'}`,
+            cursor: 'pointer', userSelect: 'none',
           }}>
             <span style={{ fontSize: 14, fontWeight: 500, color: l.on ? 'var(--tm-primary-deep)' : 'var(--tm-ink)' }}>{l.l}</span>
             <div style={{
@@ -240,9 +267,14 @@ const ScreenProfile = () => {
                   paddingRight: 8, textAlign: 'right', justifyContent: 'flex-end',
                 }}>{s}</div>
                 {availability.map((day, di) => (
-                  <div key={`${di}-${si}`} style={{
+                  <div key={`${di}-${si}`} onClick={() => setAvailability(prev => {
+                    const next = prev.map(row => [...row]);
+                    next[di][si] = next[di][si] ? 0 : 1;
+                    return next;
+                  })} style={{
                     aspectRatio: '1', borderRadius: 6,
                     background: day[si] ? 'var(--tm-primary)' : 'var(--tm-paper-deep)',
+                    cursor: 'pointer', transition: 'background .12s',
                   }}/>
                 ))}
               </React.Fragment>
@@ -351,6 +383,13 @@ const JobCard = ({ job, dim }) => {
 
 const ScreenFeed = () => {
   const { go } = React.useContext(RouterCtx);
+  const [filters, setFilters] = React.useState([
+    {l: 'All near me', on: true, ic: 'pin'},
+    {l: 'Physics', on: true},
+    {l: 'HSC', on: true},
+    {l: '৳10k+', on: false},
+    {l: 'Evening', on: false, ic: 'clock'},
+  ]);
   return (
     <Phone tab="feed">
       {/* greeting header */}
@@ -402,19 +441,14 @@ const ScreenFeed = () => {
         padding: '14px 22px 6px', display: 'flex', gap: 8,
         overflowX: 'auto', WebkitOverflowScrolling: 'touch',
       }}>
-        {[
-          {l: 'All near me', on: true, ic: 'pin'},
-          {l: 'Physics', on: true},
-          {l: 'HSC', on: true},
-          {l: '৳10k+', on: false},
-          {l: 'Evening', on: false, ic: 'clock'},
-        ].map((f, i) => (
-          <span key={i} style={{
+        {filters.map((f, i) => (
+          <span key={i} onClick={() => setFilters(prev => prev.map((x, j) => j === i ? {...x, on: !x.on} : x))} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0,
             padding: '8px 14px', borderRadius: 999, fontSize: 13, fontWeight: 500,
             border: `1px solid ${f.on ? 'transparent' : 'var(--tm-line)'}`,
             background: f.on ? 'var(--tm-primary-soft)' : 'var(--tm-surface)',
             color: f.on ? 'var(--tm-primary-deep)' : 'var(--tm-ink-soft)',
+            cursor: 'pointer', userSelect: 'none', transition: 'background .12s, color .12s',
           }}>
             {f.ic && <Icon name={f.ic} size={13}/>}
             {f.l}

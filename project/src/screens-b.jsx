@@ -3,6 +3,7 @@
 
 // ─── 5. Verification gate ────────────────────────────────────
 const ScreenVerify = () => {
+  const [submitted, setSubmitted] = React.useState(false);
   const tiers = [
     { n: 0, name: 'Phone', sub: 'Verified at signup', state: 'done', icon: 'phone',
       help: '+880 1712 048 391' },
@@ -113,7 +114,19 @@ const ScreenVerify = () => {
                   <UploadRow done label="Student ID photo" meta="2 MB · uploaded"/>
                   <UploadRow label="HSC certificate" meta="JPG, PDF accepted" cta/>
                   <UploadRow label="University enrollment letter" meta="optional"/>
-                  <Button full icon="upload" style={{ marginTop: 4 }}>Submit for review</Button>
+                  {submitted ? (
+                    <div style={{
+                      marginTop: 4, padding: '12px 14px', borderRadius: 12,
+                      background: 'var(--tm-accent-soft)', color: 'var(--tm-accent)',
+                      display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, fontWeight: 600,
+                    }}>
+                      <Icon name="checkCircle" size={18}/> Submitted · review in 24h
+                    </div>
+                  ) : (
+                    <Button full icon="upload" style={{ marginTop: 4 }} onClick={() => setSubmitted(true)}>
+                      Submit for review
+                    </Button>
+                  )}
                   <p style={{ fontSize: 11.5, color: 'var(--tm-ink-soft)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
                     Reviewed manually in 24h. We'll text when it's done.
                   </p>
@@ -142,31 +155,51 @@ const ScreenVerify = () => {
   );
 };
 
-const UploadRow = ({ label, meta, done, cta }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '10px 12px', borderRadius: 10,
-    background: done ? 'var(--tm-accent-soft)' : 'var(--tm-paper)',
-    border: `1px ${cta ? 'solid' : 'dashed'} ${done ? 'transparent' : 'var(--tm-line)'}`,
-  }}>
+const UploadRow = ({ label, meta, done: initDone, cta }) => {
+  const [done, setDone] = React.useState(initDone || false);
+  const [uploading, setUploading] = React.useState(false);
+
+  const handleAdd = () => {
+    if (done || uploading) return;
+    setUploading(true);
+    setTimeout(() => { setUploading(false); setDone(true); }, 1400);
+  };
+
+  return (
     <div style={{
-      width: 30, height: 30, borderRadius: 8,
-      background: done ? 'var(--tm-accent)' : 'var(--tm-paper-deep)',
-      color: done ? '#fff' : 'var(--tm-ink-muted)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '10px 12px', borderRadius: 10,
+      background: done ? 'var(--tm-accent-soft)' : 'var(--tm-paper)',
+      border: `1px ${cta ? 'solid' : 'dashed'} ${done ? 'transparent' : 'var(--tm-line)'}`,
+      transition: 'background .2s',
     }}>
-      <Icon name={done ? 'check' : 'upload'} size={15} stroke={2}/>
+      <div style={{
+        width: 30, height: 30, borderRadius: 8,
+        background: done ? 'var(--tm-accent)' : uploading ? 'var(--tm-primary-soft)' : 'var(--tm-paper-deep)',
+        color: done ? '#fff' : uploading ? 'var(--tm-primary-deep)' : 'var(--tm-ink-muted)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        transition: 'background .2s',
+      }}>
+        <Icon name={done ? 'check' : uploading ? 'refresh' : 'upload'} size={15} stroke={2}/>
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, color: 'var(--tm-ink)', fontWeight: 500 }}>{label}</div>
+        <div style={{ fontSize: 11, color: uploading ? 'var(--tm-primary-deep)' : 'var(--tm-ink-muted)', marginTop: 2 }}>
+          {uploading ? 'Uploading…' : done ? 'Uploaded ✓' : meta}
+        </div>
+      </div>
+      {cta && !done && !uploading && (
+        <span onClick={handleAdd} style={{ cursor: 'pointer' }}>
+          <Chip tone="primary" size="sm" icon="plus">Add</Chip>
+        </span>
+      )}
     </div>
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ fontSize: 13, color: 'var(--tm-ink)', fontWeight: 500 }}>{label}</div>
-      <div style={{ fontSize: 11, color: 'var(--tm-ink-muted)', marginTop: 2 }}>{meta}</div>
-    </div>
-    {cta && <Chip tone="primary" size="sm" icon="plus">Add</Chip>}
-  </div>
-);
+  );
+};
 
 // ─── 6. Demand "near you" heatmap ────────────────────────────
 const ScreenHeatmap = () => {
+  const { go } = React.useContext(RouterCtx);
   return (
     <Phone tab="heatmap">
       <ScreenHeader sub="This week · Dhanmondi cluster" title="Demand near you" large
@@ -201,35 +234,109 @@ const ScreenHeatmap = () => {
       <div style={{ padding: '0 22px' }}>
         <div style={{
           position: 'relative', height: 280, borderRadius: 18, overflow: 'hidden',
-          background: 'var(--tm-paper-deep)', border: '1px solid var(--tm-line)',
+          background: '#f5f3ee', border: '1px solid rgba(0,0,0,0.12)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
         }}>
           <Heatmap/>
-          {/* legend */}
+
+          {/* GMaps-style search bar */}
           <div style={{
-            position: 'absolute', left: 12, bottom: 12, background: 'var(--tm-surface)',
-            border: '1px solid var(--tm-line)', borderRadius: 10, padding: '8px 10px',
-            display: 'flex', alignItems: 'center', gap: 8, fontSize: 11,
+            position: 'absolute', top: 12, left: 12, right: 52,
+            background: '#fff', borderRadius: 24, padding: '9px 14px',
+            display: 'flex', alignItems: 'center', gap: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.22)',
           }}>
-            <span style={{ fontFamily: 'var(--tm-font-mono)', color: 'var(--tm-ink-muted)', letterSpacing: '0.08em' }}>LOW</span>
-            <div style={{
-              width: 80, height: 6, borderRadius: 3,
-              background: 'linear-gradient(90deg, var(--tm-paper-deep), var(--tm-primary))',
-            }}/>
-            <span style={{ fontFamily: 'var(--tm-font-mono)', color: 'var(--tm-ink-muted)', letterSpacing: '0.08em' }}>HIGH</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <span style={{ fontSize: 12.5, color: '#555', flex: 1 }}>Dhanmondi cluster</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4285F4" strokeWidth="2.2" strokeLinecap="round">
+              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+            </svg>
           </div>
-          {/* "you" marker */}
+
+          {/* Zoom buttons */}
           <div style={{
-            position: 'absolute', left: '38%', top: '50%', transform: 'translate(-50%,-50%)',
-            display: 'flex', alignItems: 'center', gap: 6,
+            position: 'absolute', right: 12, top: 60,
+            display: 'flex', flexDirection: 'column', gap: 1,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.22)', borderRadius: 6, overflow: 'hidden',
+          }}>
+            {['+', '−'].map(s => (
+              <div key={s} style={{
+                width: 32, height: 32, background: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18, color: '#555', cursor: 'pointer', fontWeight: 300,
+                borderBottom: s === '+' ? '1px solid #e8e8e8' : 'none',
+              }}>{s}</div>
+            ))}
+          </div>
+
+          {/* Layer button */}
+          <div style={{
+            position: 'absolute', right: 12, top: 12,
+            width: 32, height: 32, background: '#fff', borderRadius: 6,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.22)', cursor: 'pointer',
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+              <polyline points="2 17 12 22 22 17"/>
+              <polyline points="2 12 12 17 22 12"/>
+            </svg>
+          </div>
+
+          {/* YOU — Google blue current-location dot */}
+          <div style={{
+            position: 'absolute', left: 'calc(42% - 16px)', top: 'calc(50% - 16px)',
           }}>
             <div style={{
-              width: 14, height: 14, borderRadius: 7, background: 'var(--tm-ink)',
-              border: '3px solid var(--tm-surface)', boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-            }}/>
+              width: 32, height: 32, borderRadius: 16,
+              background: 'rgba(66,133,244,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: 9,
+                background: 'rgba(66,133,244,0.25)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: 5,
+                  background: '#4285F4', border: '2.5px solid #fff',
+                  boxShadow: '0 2px 6px rgba(66,133,244,0.5)',
+                }}/>
+              </div>
+            </div>
+          </div>
+
+          {/* Multi-color heat legend */}
+          <div style={{
+            position: 'absolute', left: 12, bottom: 12, background: 'rgba(255,255,255,0.92)',
+            borderRadius: 8, padding: '6px 10px',
+            boxShadow: '0 1px 5px rgba(0,0,0,0.18)',
+          }}>
+            <div style={{ fontSize: 9, color: '#666', marginBottom: 4, fontFamily: 'Arial,sans-serif', fontWeight: 600, letterSpacing: '0.04em' }}>
+              DEMAND INTENSITY
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 9, color: '#888' }}>Low</span>
+              <div style={{
+                width: 80, height: 6, borderRadius: 3,
+                background: 'linear-gradient(90deg, #0078ff, #00b894, #8cd200, #ffb300, #ff5000, #cc0000)',
+              }}/>
+              <span style={{ fontSize: 9, color: '#888' }}>High</span>
+            </div>
+          </div>
+
+          {/* Scale bar */}
+          <div style={{
+            position: 'absolute', right: 12, bottom: 14,
+            display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
+          }}>
             <div style={{
-              background: 'var(--tm-ink)', color: 'var(--tm-paper)', padding: '3px 8px',
-              borderRadius: 6, fontSize: 10.5, fontFamily: 'var(--tm-font-mono)', letterSpacing: '0.04em',
-            }}>YOU</div>
+              width: 44, height: 3, borderLeft: '1.5px solid #555',
+              borderRight: '1.5px solid #555', borderBottom: '1.5px solid #555',
+            }}/>
+            <span style={{ fontSize: 8.5, color: '#555', fontFamily: 'Arial,sans-serif' }}>500 m</span>
           </div>
         </div>
       </div>
@@ -239,10 +346,11 @@ const ScreenHeatmap = () => {
       </SectionLabel>
       <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {TM_DATA.heatmap.slice(0, 5).map((z, i) => (
-          <div key={z.name} style={{
+          <div key={z.name} onClick={() => go('feed')} style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '12px 14px', background: 'var(--tm-surface)',
             border: '1px solid var(--tm-line)', borderRadius: 14,
+            cursor: 'pointer',
           }}>
             <div style={{
               width: 30, textAlign: 'center', fontFamily: 'var(--tm-font-display)',
@@ -268,52 +376,135 @@ const ScreenHeatmap = () => {
   );
 };
 
-// Stylized heat blobs over an abstract Dhaka street grid
+// Google Maps-inspired heat map of Dhaka's Dhanmondi cluster
 const Heatmap = () => {
   const W = 380, H = 280;
+
+  const heatStop = (intensity) => {
+    if (intensity > 0.85) return { c: 'rgb(200,0,0)',   op: 0.85 };
+    if (intensity > 0.70) return { c: 'rgb(255,80,0)',  op: 0.80 };
+    if (intensity > 0.55) return { c: 'rgb(255,175,0)', op: 0.75 };
+    if (intensity > 0.40) return { c: 'rgb(140,210,0)', op: 0.68 };
+    if (intensity > 0.25) return { c: 'rgb(0,185,130)', op: 0.60 };
+    return                        { c: 'rgb(0,120,255)', op: 0.52 };
+  };
+
+  const pinColor = (intensity) => {
+    if (intensity > 0.85) return '#cc0000';
+    if (intensity > 0.70) return '#ff5000';
+    if (intensity > 0.55) return '#ffb300';
+    if (intensity > 0.40) return '#7bc800';
+    if (intensity > 0.25) return '#00b894';
+    return '#0078ff';
+  };
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-      {/* base streets */}
-      <g stroke="var(--tm-line)" strokeWidth="1" fill="none" opacity="0.7">
-        {Array.from({length: 9}).map((_, i) => (
-          <line key={`h${i}`} x1="0" y1={30 + i * 28} x2={W} y2={30 + i * 28 + (i % 2 ? 6 : -4)}/>
-        ))}
-        {Array.from({length: 11}).map((_, i) => (
-          <line key={`v${i}`} x1={30 + i * 34} y1="0" x2={30 + i * 34 + (i % 2 ? 4 : -3)} y2={H}/>
-        ))}
-      </g>
-      {/* main road */}
-      <path d="M0 130 C 80 110, 200 160, 380 120" stroke="var(--tm-ink-muted)" strokeWidth="3" opacity="0.45" fill="none"/>
-      <path d="M180 0 C 200 80, 150 180, 200 280" stroke="var(--tm-ink-muted)" strokeWidth="3" opacity="0.45" fill="none"/>
-
-      {/* heat blobs */}
       <defs>
-        {TM_DATA.heatmap.map((z, i) => (
-          <radialGradient key={i} id={`heat-${i}`} cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="var(--tm-primary)" stopOpacity={0.85 * z.intensity}/>
-            <stop offset="100%" stopColor="var(--tm-primary)" stopOpacity="0"/>
-          </radialGradient>
-        ))}
+        {TM_DATA.heatmap.map((z, i) => {
+          const { c, op } = heatStop(z.intensity);
+          return (
+            <radialGradient key={i} id={`gheat-${i}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stopColor={c} stopOpacity={op}/>
+              <stop offset="55%"  stopColor={c} stopOpacity={op * 0.45}/>
+              <stop offset="100%" stopColor={c} stopOpacity="0"/>
+            </radialGradient>
+          );
+        })}
       </defs>
-      {TM_DATA.heatmap.map((z, i) => {
-        const r = 30 + z.intensity * 50;
+
+      {/* Google Maps light base */}
+      <rect width={W} height={H} fill="#f5f3ee"/>
+
+      {/* Parks */}
+      <rect x="24" y="14" width="54" height="40" rx="5" fill="#c6e6b3"/>
+      <rect x="296" y="196" width="68" height="55" rx="5" fill="#c6e6b3"/>
+
+      {/* Dhanmondi Lake */}
+      <path d="M176 10 C 180 55, 172 105, 177 148 C 182 188, 173 228, 178 272"
+        stroke="#a5c8df" strokeWidth="22" fill="none" strokeLinecap="round"/>
+
+      {/* Building blocks */}
+      <g fill="#e8e2d4">
+        <rect x="34" y="20" width="38" height="24" rx="2"/>
+        <rect x="80" y="20" width="34" height="24" rx="2"/>
+        <rect x="34" y="50" width="26" height="20" rx="2"/>
+        <rect x="68" y="50" width="44" height="20" rx="2"/>
+        <rect x="10" y="118" width="40" height="26" rx="2"/>
+        <rect x="10" y="150" width="58" height="24" rx="2"/>
+        <rect x="10" y="182" width="46" height="22" rx="2"/>
+        <rect x="10" y="212" width="52" height="22" rx="2"/>
+        <rect x="208" y="38" width="50" height="30" rx="2"/>
+        <rect x="266" y="38" width="44" height="30" rx="2"/>
+        <rect x="318" y="38" width="50" height="30" rx="2"/>
+        <rect x="208" y="76" width="38" height="24" rx="2"/>
+        <rect x="254" y="76" width="50" height="24" rx="2"/>
+        <rect x="312" y="76" width="56" height="24" rx="2"/>
+        <rect x="252" y="146" width="44" height="28" rx="2"/>
+        <rect x="304" y="146" width="64" height="28" rx="2"/>
+        <rect x="252" y="182" width="36" height="24" rx="2"/>
+        <rect x="52" y="224" width="48" height="30" rx="2"/>
+        <rect x="112" y="224" width="44" height="30" rx="2"/>
+      </g>
+
+      {/* Major roads */}
+      <g stroke="#ffffff" strokeWidth="7" fill="none" strokeLinecap="round">
+        <line x1="14" y1="0" x2="14" y2={H}/>
+        <line x1="204" y1="0" x2="203" y2={H}/>
+        <line x1="0" y1="102" x2={W} y2="100"/>
+        <line x1="0" y1="210" x2={W} y2="208"/>
+      </g>
+
+      {/* Secondary roads */}
+      <g stroke="#ede8de" strokeWidth="4" fill="none" strokeLinecap="round">
+        <line x1="0" y1="56" x2={W} y2="54"/>
+        <line x1="0" y1="158" x2={W} y2="160"/>
+        <line x1="0" y1="256" x2={W} y2="254"/>
+        <line x1="80" y1="0" x2="80" y2={H}/>
+        <line x1="144" y1="0" x2="144" y2={H}/>
+        <line x1="250" y1="0" x2="250" y2={H}/>
+        <line x1="312" y1="0" x2="312" y2={H}/>
+      </g>
+
+      {/* Tertiary streets */}
+      <g stroke="#ede8de" strokeWidth="2" fill="none" opacity="0.7">
+        <line x1="0" y1="28" x2={W} y2="28"/>
+        <line x1="0" y1="130" x2={W} y2="130"/>
+        <line x1="0" y1="184" x2={W} y2="183"/>
+        <line x1="50" y1="0" x2="50" y2={H}/>
+        <line x1="114" y1="0" x2="114" y2={H}/>
+        <line x1="228" y1="0" x2="228" y2={H}/>
+        <line x1="278" y1="0" x2="278" y2={H}/>
+        <line x1="344" y1="0" x2="344" y2={H}/>
+      </g>
+
+      {/* Heat blobs */}
+      {TM_DATA.heatmap.map((z, i) => (
+        <circle key={i} cx={z.x * W} cy={z.y * H} r={32 + z.intensity * 60}
+          fill={`url(#gheat-${i})`}/>
+      ))}
+
+      {/* Zone pins — top 4 zones */}
+      {TM_DATA.heatmap.slice(0, 4).map((z, i) => {
+        const cx = z.x * W, cy = z.y * H;
+        const col = pinColor(z.intensity);
         return (
-          <circle key={i} cx={z.x * W} cy={z.y * H} r={r} fill={`url(#heat-${i})`}/>
+          <g key={i} transform={`translate(${cx},${cy})`}>
+            <circle r="14" fill="rgba(0,0,0,0.18)" cx="1" cy="3"/>
+            <circle r="14" fill={col} stroke="#ffffff" strokeWidth="2.5"/>
+            <text textAnchor="middle" dominantBaseline="central" y="0.5"
+              fontFamily="Arial,sans-serif" fontSize="10" fontWeight="700" fill="#fff">
+              {z.requests}
+            </text>
+            {/* label pill */}
+            <rect x="-22" y="18" width="44" height="14" rx="7" fill="rgba(255,255,255,0.9)"/>
+            <text textAnchor="middle" y="28" fontFamily="Arial,sans-serif"
+              fontSize="8.5" fontWeight="700" fill="#333">
+              {z.name.split(' ')[0]}
+            </text>
+          </g>
         );
       })}
-      {/* labels for top 3 */}
-      {TM_DATA.heatmap.slice(0, 3).map((z, i) => (
-        <g key={i} transform={`translate(${z.x * W}, ${z.y * H - 6})`}>
-          <text textAnchor="middle" y="-12" fontFamily="var(--tm-font-mono)" fontSize="9"
-            letterSpacing="0.1em" fill="var(--tm-ink)" style={{ textTransform: 'uppercase' }}>
-            {z.requests}
-          </text>
-          <circle r="4" fill="var(--tm-primary-deep)"/>
-          <text textAnchor="middle" y="16" fontFamily="var(--tm-font-ui)" fontSize="9.5" fontWeight="600" fill="var(--tm-ink)">
-            {z.name.split(' ')[0]}
-          </text>
-        </g>
-      ))}
     </svg>
   );
 };
@@ -331,7 +522,8 @@ const ScreenLocation = () => {
       <div style={{ padding: '0 22px 14px' }}>
         <div style={{
           position: 'relative', height: 340, borderRadius: 18, overflow: 'hidden',
-          background: '#e8e3d6', border: '1px solid var(--tm-line)',
+          background: '#f5f3ee', border: '1px solid rgba(0,0,0,0.12)',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
         }}>
           <MapsView granted={granted}/>
 
@@ -362,24 +554,45 @@ const ScreenLocation = () => {
             </div>
           )}
 
-          {/* Maps-like top search bar in granted mode */}
-          {granted && (
-            <div style={{
-              position: 'absolute', top: 12, left: 12, right: 12,
-              background: 'var(--tm-surface)', borderRadius: 12, padding: '10px 12px',
-              display: 'flex', alignItems: 'center', gap: 10,
-              boxShadow: '0 4px 14px rgba(35,29,24,0.18)',
-            }}>
-              <Icon name="search" size={16}/>
-              <div style={{ flex: 1, fontSize: 13, color: 'var(--tm-ink-soft)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                House 47, Road 9/A, Dhanmondi 27
-              </div>
-              <div style={{
-                fontFamily: 'var(--tm-font-mono)', fontSize: 10, color: 'var(--tm-primary)',
-                letterSpacing: '0.08em', fontWeight: 600,
-              }}>14 MIN</div>
+          {/* GMaps-style search bar — always visible */}
+          <div style={{
+            position: 'absolute', top: 12, left: 12, right: 12,
+            background: '#fff', borderRadius: 24, padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 10,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.24)',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={granted ? '#4285F4' : '#888'} strokeWidth="2.2" strokeLinecap="round">
+              {granted
+                ? <><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></>
+                : <><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>
+              }
+            </svg>
+            <div style={{ flex: 1, fontSize: 12.5, color: granted ? '#333' : '#777', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {granted ? 'House 47, Road 9/A, Dhanmondi 27' : 'Approximate area · Dhanmondi 27'}
             </div>
-          )}
+            {granted && (
+              <div style={{
+                background: '#4285F4', color: '#fff', padding: '3px 9px',
+                borderRadius: 12, fontSize: 10, fontWeight: 700, letterSpacing: '0.04em', whiteSpace: 'nowrap',
+              }}>14 MIN</div>
+            )}
+          </div>
+
+          {/* Zoom + Layer buttons */}
+          <div style={{ position: 'absolute', right: 12, top: 60, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 1,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.22)', borderRadius: 6, overflow: 'hidden',
+            }}>
+              {['+', '−'].map(s => (
+                <div key={s} style={{
+                  width: 32, height: 32, background: '#fff', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: 18, color: '#555', cursor: 'pointer', fontWeight: 300,
+                  borderBottom: s === '+' ? '1px solid #e8e8e8' : 'none',
+                }}>{s}</div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -486,71 +699,135 @@ const Detail = ({ label, value }) => (
   </div>
 );
 
-// Maps illustration — fuzzed circle when not granted, exact pin + route when granted
+// Google Maps-style map — fuzzy pin when not granted, blue route + red pin when granted
 const MapsView = ({ granted }) => {
   const W = 380, H = 340;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-      {/* parks / blocks */}
-      <rect x="0" y="0" width={W} height={H} fill="#eee6d2"/>
-      <g fill="#d8e3c8">
-        <rect x="40" y="30" width="80" height="60" rx="4"/>
-        <rect x="200" y="220" width="120" height="80" rx="4"/>
+      {/* Google Maps light base */}
+      <rect width={W} height={H} fill="#f5f3ee"/>
+
+      {/* Parks */}
+      <rect x="50" y="18" width="85" height="62" rx="5" fill="#c6e6b3"/>
+      <rect x="252" y="242" width="106" height="72" rx="5" fill="#c6e6b3"/>
+
+      {/* Water (lake) */}
+      <path d="M186 14 C 190 75, 182 145, 187 205 C 192 260, 182 300, 186 342"
+        stroke="#a5c8df" strokeWidth="26" fill="none" strokeLinecap="round"/>
+
+      {/* Building blocks */}
+      <g fill="#e8e2d4">
+        <rect x="18" y="24" width="46" height="32" rx="2"/>
+        <rect x="72" y="24" width="38" height="32" rx="2"/>
+        <rect x="18" y="64" width="36" height="26" rx="2"/>
+        <rect x="62" y="64" width="50" height="26" rx="2"/>
+        <rect x="18" y="142" width="44" height="28" rx="2"/>
+        <rect x="18" y="178" width="58" height="25" rx="2"/>
+        <rect x="18" y="212" width="50" height="26" rx="2"/>
+        <rect x="18" y="248" width="46" height="27" rx="2"/>
+        <rect x="214" y="36" width="54" height="36" rx="2"/>
+        <rect x="276" y="36" width="48" height="36" rx="2"/>
+        <rect x="332" y="36" width="36" height="36" rx="2"/>
+        <rect x="214" y="80" width="40" height="26" rx="2"/>
+        <rect x="262" y="80" width="54" height="26" rx="2"/>
+        <rect x="324" y="80" width="44" height="26" rx="2"/>
+        <rect x="232" y="148" width="48" height="30" rx="2"/>
+        <rect x="288" y="148" width="62" height="30" rx="2"/>
+        <rect x="232" y="186" width="42" height="27" rx="2"/>
+        <rect x="282" y="186" width="72" height="27" rx="2"/>
+        <rect x="232" y="222" width="46" height="26" rx="2"/>
       </g>
-      {/* blocks (buildings) */}
-      <g fill="#dccea7">
-        {Array.from({length: 22}).map((_, i) => {
-          const x = 20 + (i % 6) * 60 + (i % 2 ? 4 : 0);
-          const y = 20 + Math.floor(i / 6) * 70 + (i % 3 ? 0 : 8);
-          const w = 38 + (i % 3) * 6;
-          const h = 30 + (i % 4) * 8;
-          return <rect key={i} x={x} y={y} width={w} height={h} rx="2"/>;
-        })}
+
+      {/* Major roads */}
+      <g stroke="#ffffff" strokeWidth="8" fill="none" strokeLinecap="round">
+        <line x1="16" y1="0" x2="16" y2={H}/>
+        <line x1="210" y1="0" x2="208" y2={H}/>
+        <line x1="0" y1="120" x2={W} y2="118"/>
+        <line x1="0" y1="238" x2={W} y2="236"/>
       </g>
-      {/* streets */}
-      <g stroke="#fdfaf3" strokeWidth="6" strokeLinecap="round">
-        <line x1="0" y1="120" x2={W} y2="124"/>
-        <line x1="0" y1="220" x2={W} y2="216"/>
+
+      {/* Secondary roads */}
+      <g stroke="#ede8de" strokeWidth="4.5" fill="none" strokeLinecap="round">
+        <line x1="0" y1="66" x2={W} y2="64"/>
+        <line x1="0" y1="176" x2={W} y2="178"/>
+        <line x1="0" y1="308" x2={W} y2="306"/>
+        <line x1="90" y1="0" x2="90" y2={H}/>
+        <line x1="155" y1="0" x2="155" y2={H}/>
+        <line x1="268" y1="0" x2="268" y2={H}/>
+        <line x1="330" y1="0" x2="330" y2={H}/>
+      </g>
+
+      {/* Tertiary */}
+      <g stroke="#ede8de" strokeWidth="2.5" fill="none" opacity="0.7">
+        <line x1="0" y1="32" x2={W} y2="32"/>
+        <line x1="0" y1="97" x2={W} y2="97"/>
+        <line x1="0" y1="155" x2={W} y2="154"/>
+        <line x1="0" y1="207" x2={W} y2="206"/>
+        <line x1="0" y1="270" x2={W} y2="269"/>
+        <line x1="52" y1="0" x2="52" y2={H}/>
         <line x1="120" y1="0" x2="120" y2={H}/>
-        <line x1="240" y1="0" x2="244" y2={H}/>
-      </g>
-      <g stroke="#fdfaf3" strokeWidth="3" strokeLinecap="round" opacity="0.8">
-        <line x1="0" y1="60" x2={W} y2="62"/>
-        <line x1="0" y1="290" x2={W} y2="288"/>
-        <line x1="60" y1="0" x2="60" y2={H}/>
-        <line x1="180" y1="0" x2="180" y2={H}/>
-        <line x1="320" y1="0" x2="320" y2={H}/>
+        <line x1="240" y1="0" x2="240" y2={H}/>
+        <line x1="294" y1="0" x2="294" y2={H}/>
+        <line x1="352" y1="0" x2="352" y2={H}/>
       </g>
 
-      {/* "you" — current location dot, bottom-left area */}
-      <g transform="translate(110, 230)">
-        <circle r="22" fill="var(--tm-primary)" opacity="0.18"/>
-        <circle r="9" fill="var(--tm-primary)" stroke="#fdfaf3" strokeWidth="3"/>
+      {/* Compass rose */}
+      <g transform="translate(348, 28)">
+        <circle r="14" fill="rgba(255,255,255,0.92)" stroke="#e0dcd4" strokeWidth="1"/>
+        <text textAnchor="middle" y="-3" fontFamily="Arial,sans-serif" fontSize="9" fontWeight="700" fill="#444">N</text>
+        <path d="M0 0 L -3 6 L 0 4 L 3 6 Z" fill="#EA4335"/>
+        <path d="M0 0 L -3 -6 L 0 -4 L 3 -6 Z" fill="#bbb"/>
       </g>
 
+      {/* YOU — Google blue current location */}
+      <g transform="translate(115, 255)">
+        <circle r="26" fill="#4285F4" opacity="0.12"/>
+        <circle r="16" fill="#4285F4" opacity="0.18"/>
+        <circle r="9" fill="#4285F4" stroke="#ffffff" strokeWidth="3"
+          style={{ filter: 'drop-shadow(0 2px 4px rgba(66,133,244,0.6))' }}/>
+      </g>
+
+      {/* NOT GRANTED — fuzzy dashed circle + ghost pin */}
       {!granted && (
-        <g transform="translate(245, 110)">
-          {/* fuzzy circle */}
-          <circle r="62" fill="var(--tm-ink)" opacity="0.12"/>
-          <circle r="62" fill="none" stroke="var(--tm-ink)" strokeWidth="1.4" strokeDasharray="5 5" opacity="0.6"/>
+        <g transform="translate(258, 115)">
+          <circle r="68" fill="#4285F4" opacity="0.07"/>
+          <circle r="68" fill="none" stroke="#4285F4" strokeWidth="1.5"
+            strokeDasharray="6 5" opacity="0.45"/>
           {/* ghost pin */}
-          <g opacity="0.6">
-            <path d="M0 -22 a14 14 0 1 1 0 28 z" fill="var(--tm-ink)" opacity="0.4"/>
-          </g>
+          <path d="M0 -22 C -13 -22, -20 -12, -20 -2 C -20 12, 0 30, 0 30 C 0 30, 20 12, 20 -2 C 20 -12, 13 -22, 0 -22Z"
+            fill="#999" opacity="0.30"/>
+          <circle r="6" cy="-2" fill="rgba(255,255,255,0.65)"/>
+          <text textAnchor="middle" y="48" fontFamily="Arial,sans-serif" fontSize="9"
+            fontWeight="600" fill="#555">~300 m radius</text>
         </g>
       )}
 
+      {/* GRANTED — Google-style blue route + red destination pin */}
       {granted && (
         <>
-          {/* navigation route */}
-          <path d="M110 230 Q 150 200, 180 180 T 240 130 Q 246 120, 248 112"
-            stroke="var(--tm-primary)" strokeWidth="5" fill="none" strokeLinecap="round"/>
-          {/* destination pin */}
-          <g transform="translate(248, 108)">
-            <path d="M0 -8 C -10 -8, -16 -2, -16 6 C -16 16, 0 30, 0 30 C 0 30, 16 16, 16 6 C 16 -2, 10 -8, 0 -8 Z"
-              fill="var(--tm-primary)" stroke="#fdfaf3" strokeWidth="2"/>
-            <circle r="4" cy="2" fill="#fdfaf3"/>
+          {/* Route glow */}
+          <path d="M115 255 C 142 228, 175 198, 198 172 C 218 150, 244 132, 258 117"
+            stroke="#4285F4" strokeWidth="12" fill="none" strokeLinecap="round" opacity="0.2"/>
+          {/* Route line */}
+          <path d="M115 255 C 142 228, 175 198, 198 172 C 218 150, 244 132, 258 117"
+            stroke="#4285F4" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+          {/* Direction arrow mid-route */}
+          <g transform="translate(185,188) rotate(-45)">
+            <path d="M0 -5 L 5 0 L 0 5" stroke="#4285F4" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
           </g>
+          {/* Destination shadow */}
+          <ellipse cx="260" cy="116" rx="8" ry="4" fill="rgba(0,0,0,0.22)"/>
+          {/* Destination pin — Google red */}
+          <g transform="translate(258, 110)">
+            <path d="M0 -20 C -13 -20, -20 -10, -20 -2 C -20 14, 0 32, 0 32 C 0 32, 20 14, 20 -2 C 20 -10, 13 -20, 0 -20Z"
+              fill="#EA4335" stroke="#ffffff" strokeWidth="2.5"/>
+            <circle r="6.5" cy="-4" fill="#ffffff"/>
+          </g>
+          {/* Distance badge */}
+          <rect x="258" y="148" width="50" height="20" rx="10" fill="rgba(255,255,255,0.95)"
+            style={{ filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }}/>
+          <text x="283" y="161" textAnchor="middle" fontFamily="Arial,sans-serif"
+            fontSize="9.5" fontWeight="700" fill="#333">1.4 km</text>
         </>
       )}
     </svg>
