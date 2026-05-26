@@ -21,13 +21,20 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android build tools & platform
+      - name: Install platform + build tools
         run: |
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" --sdk_root=$ANDROID_SDK_ROOT
+          sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Write local.properties
+        working-directory: android
+        run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
 
       - name: Decode keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
+        working-directory: android/app
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > release.keystore
 
       - name: Build release APK
         working-directory: android
@@ -36,20 +43,11 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
-          ANDROID_SDK_ROOT:  ${{ env.ANDROID_SDK_ROOT }}
-        run: |
-          gradle assembleRelease \
-            --no-daemon \
-            -Pandroid.sdk.dir=$ANDROID_SDK_ROOT
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Rename APK
-        run: |
-          mv android/app/build/outputs/apk/release/app-release.apk \
-             tution-media-v1.0.0-release.apk
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: tution-media-release-apk
-          path: tution-media-v1.0.0-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
