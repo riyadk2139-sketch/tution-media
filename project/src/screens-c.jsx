@@ -393,7 +393,9 @@ const ChatThread = ({ chatId, onClose }) => {
 
 // ─── 10. Reputation / Profile ────────────────────────────────
 const ScreenReputation = () => {
-  const t = TM_DATA.tutor;
+  const { go } = React.useContext(RouterCtx);
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const t = s ? s.profile : TM_DATA.tutor;
   // tier ladder
   const tierLadder = [
     { name: 'Apprentice', need: 0,  cur: false },
@@ -429,18 +431,23 @@ const ScreenReputation = () => {
               }}>{t.handle}</span>
             </div>
           </div>
-          <button style={{
+          <button onClick={() => go('settings')} style={{
             background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
             width: 36, height: 36, borderRadius: 18, color: 'var(--tm-ink)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0,
           }}>
-            <Icon name="pen" size={15}/>
+            <Icon name="settings" size={16}/>
           </button>
         </div>
 
         <div style={{ marginTop: 14, fontSize: 13.5, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
-          {t.institution} · {t.department}, {t.year}. Teaching Physics & Math
-          across Dhanmondi, Mohammadpur, Lalmatia.
+          {t.institution} · {t.department}, {t.year}. Teaching {(t.subjects || []).slice(0, 2).join(' & ')}
+          {(t.areas && t.areas.length) ? ` across ${t.areas.join(', ')}.` : '.'}
+        </div>
+
+        <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+          <Button variant="secondary" size="sm" icon="shield" onClick={() => go('verify')}>Verification</Button>
+          <Button variant="secondary" size="sm" icon="pen" onClick={() => go('profile')}>Edit profile</Button>
         </div>
       </div>
 

@@ -51,6 +51,7 @@ const Icon = ({ name, size = 20, stroke = 1.6, fill }) => {
     eye:         <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></>,
     eyeOff:      <><path d="M3 3l18 18"/><path d="M10.6 6.3A10 10 0 0112 6c6 0 10 6 10 6a18 18 0 01-3 3.5"/><path d="M6 8.5A18 18 0 002 12s4 7 10 7c1.6 0 3-.3 4.4-.9"/><circle cx="12" cy="12" r="2.5"/></>,
     pen:         <><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/></>,
+    settings:    <><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></>,
     sparkles:    <><path d="M5 5l1.5 3.5L10 10l-3.5 1.5L5 15l-1.5-3.5L0 10l3.5-1.5z" transform="translate(2 2)"/><path d="M18 13l1 2.5L21.5 17l-2.5 1L18 21l-1-2.5L14.5 17l2.5-1z"/></>,
     chart:       <><path d="M4 20V8"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/></>,
     award:       <><circle cx="12" cy="9" r="6"/><path d="M8 14l-2 8 6-3 6 3-2-8"/></>,

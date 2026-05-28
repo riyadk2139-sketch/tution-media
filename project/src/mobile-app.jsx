@@ -22,23 +22,28 @@ function MobileApp({ palette = 'midnight' }) {
   const [params, setParams] = React.useState({});
   const [history, setHistory] = React.useState([initialRoute]);
 
-  // When role changes externally (settings switch), jump to that role's home.
-  // Watch role; if it changes and current route doesn't belong to that role, redirect.
+  // Derive the route to actually display. If the stored route no longer fits
+  // the current role (e.g. role was just switched, or onboarding completed),
+  // fall back to that role's home. Computing this during render — rather than
+  // in an effect — guarantees the screen is always consistent with the role.
+  const fitsRole = (r) => {
+    if (!role) return r === 'welcome';
+    if (role === 'tutor') return r !== 'welcome' && !r.startsWith('g-');
+    if (role === 'guardian') return r !== 'welcome' && !TUTOR_ONLY.has(r);
+    return true;
+  };
+  const homeRoute = !role ? 'welcome' : role === 'tutor' ? 'feed' : 'g-home';
+  const displayRoute = fitsRole(route) ? route : homeRoute;
+
+  // Keep the route state in sync with the derived route so navigation/back
+  // operate from the correct base after a role change.
   React.useEffect(() => {
-    if (!role && route !== 'welcome') {
-      setRoute('welcome');
-      setHistory(['welcome']);
-      return;
+    if (displayRoute !== route) {
+      setRoute(displayRoute);
+      setHistory([displayRoute]);
+      setParams({});
     }
-    if (role === 'tutor' && (route === 'welcome' || route.startsWith('g-'))) {
-      setRoute('feed');
-      setHistory(['feed']);
-    }
-    if (role === 'guardian' && (route === 'welcome' || TUTOR_ONLY.has(route))) {
-      setRoute('g-home');
-      setHistory(['g-home']);
-    }
-  }, [role]);
+  }, [displayRoute]);
 
   const go = (r, p = {}) => {
     setRoute(r);
@@ -60,10 +65,10 @@ function MobileApp({ palette = 'midnight' }) {
     setHistory([r]);
   };
 
-  const ctx = React.useMemo(() => ({ route, go, back, replace, params }), [route, params]);
+  const ctx = React.useMemo(() => ({ route: displayRoute, go, back, replace, params }), [displayRoute, params]);
 
-  const Comp = ALL_SCREENS[route] || ScreenWelcome;
-  const showTabs = TAB_ROUTES.has(route) && role;
+  const Comp = ALL_SCREENS[displayRoute] || ScreenWelcome;
+  const showTabs = TAB_ROUTES.has(displayRoute) && role;
 
   const vars = tmVars(palette);
   const paletteObj = TM_PALETTES[palette] || TM_PALETTES.midnight;
@@ -82,7 +87,7 @@ function MobileApp({ palette = 'midnight' }) {
         <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <Comp/>
         </div>
-        {showTabs && <MobileTabBar role={role} active={ROUTE_TO_TAB[route]} onPick={(r) => replace(r)}/>}
+        {showTabs && <MobileTabBar role={role} active={ROUTE_TO_TAB[displayRoute]} onPick={(r) => replace(r)}/>}
       </div>
     </RouterCtx.Provider>
   );

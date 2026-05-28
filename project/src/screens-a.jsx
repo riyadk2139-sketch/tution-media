@@ -141,25 +141,37 @@ const ScreenOnboarding = () => {
 
 // ─── 2. Profile builder ──────────────────────────────────────
 const ScreenProfile = () => {
+  const { back } = React.useContext(RouterCtx);
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const prof = s ? s.profile : TM_DATA.tutor;
   const subjectsAll = ['Physics', 'Math', 'Higher Math', 'Chemistry', 'Biology', 'English', 'ICT', 'Bangla', 'Accounting', 'Economics'];
-  const [selected, setSelected] = React.useState(new Set(['Physics', 'Math', 'Higher Math', 'Chemistry']));
-  const [levels, setLevels] = React.useState([
-    { l: 'Class 6–8', on: false },
-    { l: 'Class 9–10 / SSC', on: true },
-    { l: 'HSC', on: true },
-    { l: 'O-Level / A-Level', on: true },
-    { l: 'University', on: false },
-  ]);
+  const levelsAll = ['Class 6–8', 'Class 9–10 / SSC', 'HSC', 'O-Level / A-Level', 'University'];
+  const [selected, setSelected] = React.useState(new Set(prof.subjects || []));
+  const [levels, setLevels] = React.useState(
+    levelsAll.map(l => ({ l, on: (prof.levels || []).includes(l) }))
+  );
   const days = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
   const slots = ['Morning','Afternoon','Evening','Night'];
-  const [availability, setAvailability] = React.useState([
-    [0,0,1,1],[0,0,1,1],[0,1,1,1],[0,1,1,0],[0,1,1,1],[0,1,1,0],[1,1,0,0],
-  ]);
+  const [availability, setAvailability] = React.useState(
+    (prof.availability && prof.availability.length === 7) ? prof.availability :
+    [[0,0,1,1],[0,0,1,1],[0,1,1,1],[0,1,1,0],[0,1,1,1],[0,1,1,0],[1,1,0,0]]
+  );
+
+  const save = () => {
+    if (typeof TmActions !== 'undefined') {
+      TmActions.setProfile({
+        subjects: Array.from(selected),
+        levels: levels.filter(l => l.on).map(l => l.l),
+        availability,
+      });
+    }
+    back();
+  };
 
   return (
     <Phone>
-      <ScreenHeader back title="Build your profile" sub="Step 2 of 4"
-        right={<button style={{ background: 'transparent', border: 0, fontFamily: 'var(--tm-font-mono)', fontSize: 11, color: 'var(--tm-ink-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Save</button>}/>
+      <ScreenHeader back title="Build your profile" sub="Subjects · levels · availability"
+        right={<button onClick={save} style={{ background: 'transparent', border: 0, fontFamily: 'var(--tm-font-mono)', fontSize: 11, color: 'var(--tm-primary)', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer' }}>Save</button>}/>
 
       {/* progress */}
       <div style={{ padding: '0 22px 14px' }}>
@@ -178,10 +190,10 @@ const ScreenProfile = () => {
           <Icon name="camera" size={22}/>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, color: 'var(--tm-ink)', lineHeight: 1.1 }}>Tanvir Hasan</div>
+          <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, color: 'var(--tm-ink)', lineHeight: 1.1 }}>{prof.name || 'You'}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-            <Chip tone="neutral" icon="book" size="sm">BUET · ME · 3rd yr</Chip>
-            <Chip tone="primary" size="sm">CGPA 3.78</Chip>
+            <Chip tone="neutral" icon="book" size="sm">{prof.institution} · {prof.department ? prof.department.split(' ')[0] : ''}</Chip>
+            <Chip tone="primary" size="sm">CGPA {prof.cgpa}</Chip>
           </div>
         </div>
       </div>
@@ -287,8 +299,8 @@ const ScreenProfile = () => {
       </div>
 
       <div style={{ padding: '0 22px 18px', display: 'flex', gap: 10 }}>
-        <Button variant="secondary" size="lg" full>Back</Button>
-        <Button size="lg" full icon="arrR">Continue</Button>
+        <Button variant="secondary" size="lg" full onClick={back}>Cancel</Button>
+        <Button size="lg" full icon="check" onClick={save}>Save profile</Button>
       </div>
     </Phone>
   );
@@ -443,20 +455,26 @@ const ScreenFeed = () => {
         </div>
       </div>
 
-      {/* alert ribbon — verification nudge */}
-      <div style={{ padding: '8px 22px 0' }}>
-        <div onClick={() => go('verify')} style={{
-          background: 'var(--tm-ink)', color: 'var(--tm-paper)', borderRadius: 14,
-          padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
-        }}>
-          <Icon name="shield" size={20}/>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 600 }}>1 step left to start getting hired</div>
-            <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 2 }}>Education verification · ~2 min</div>
+      {/* alert ribbon — verification nudge (hidden once fully verified) */}
+      {(s ? (s.profile.verifyTier || 0) : 2) < 3 && (
+        <div style={{ padding: '8px 22px 0' }}>
+          <div onClick={() => go('verify')} style={{
+            background: 'var(--tm-ink)', color: 'var(--tm-paper)', borderRadius: 14,
+            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+          }}>
+            <Icon name="shield" size={20}/>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600 }}>
+                {(s ? (s.profile.verifyTier || 0) : 2) === 0
+                  ? 'Verify your phone to start applying'
+                  : `${3 - (s ? (s.profile.verifyTier || 0) : 2)} step${3 - (s ? (s.profile.verifyTier || 0) : 2) === 1 ? '' : 's'} left to unlock more jobs`}
+              </div>
+              <div style={{ fontSize: 11.5, opacity: 0.7, marginTop: 2 }}>Tap to continue verification · ~2 min</div>
+            </div>
+            <Icon name="chevR" size={16}/>
           </div>
-          <Icon name="chevR" size={16}/>
         </div>
-      </div>
+      )}
 
       {/* filter pills */}
       <div style={{
