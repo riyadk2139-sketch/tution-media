@@ -297,8 +297,21 @@ const ScreenProfile = () => {
 // ─── 3. Live job feed ────────────────────────────────────────
 const JobCard = ({ job, dim }) => {
   const { go } = React.useContext(RouterCtx);
+  // Live-read store so the "applied" state reflects updates without re-mounting.
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const meName = s ? (s.profile.name || 'You') : null;
+  const myApp = s ? s.applications.find(a => a.jobId === job.id && a.tutor && a.tutor.name === meName) : null;
+  const applicantCount = s ? s.applications.filter(a => a.jobId === job.id).length : (job.applicants || 0);
+
+  const handleApply = (e) => {
+    e.stopPropagation();
+    if (myApp) { go('apply'); return; }
+    if (typeof TmActions !== 'undefined') TmActions.applyToJob(job.id);
+    go('apply');
+  };
+
   return (
-    <Card pad={0} onClick={() => go('apply')} style={{ opacity: dim ? 0.6 : 1, overflow: 'hidden' }}>
+    <Card pad={0} onClick={() => go('job', { id: job.id })} style={{ opacity: dim ? 0.6 : 1, overflow: 'hidden' }}>
       {/* match score bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -311,7 +324,7 @@ const JobCard = ({ job, dim }) => {
           </span>
         </div>
         <span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, color: 'var(--tm-ink-muted)' }}>
-          {job.applicants} applied
+          {applicantCount} applied
         </span>
       </div>
 
@@ -374,7 +387,11 @@ const JobCard = ({ job, dim }) => {
               <Icon name="checkCircle" size={13} stroke={2.2}/>
             )}
           </div>
-          <Button size="sm" icon="bolt">1-tap apply</Button>
+          {myApp ? (
+            <Chip tone="accent" size="sm" icon="check">Applied</Chip>
+          ) : (
+            <Button size="sm" icon="bolt" onClick={handleApply}>1-tap apply</Button>
+          )}
         </div>
       </div>
     </Card>
@@ -383,6 +400,11 @@ const JobCard = ({ job, dim }) => {
 
 const ScreenFeed = () => {
   const { go } = React.useContext(RouterCtx);
+  // Subscribe to the store so new listings appear immediately.
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const isMobile = (typeof isMobileApp === 'function') && isMobileApp();
+  const jobs = s ? s.listings : TM_DATA.jobs;
+  const profileName = s ? (s.profile.name || 'Tanvir') : 'Tanvir';
   const [filters, setFilters] = React.useState([
     {l: 'All near me', on: true, ic: 'pin'},
     {l: 'Physics', on: true},
@@ -391,7 +413,7 @@ const ScreenFeed = () => {
     {l: 'Evening', on: false, ic: 'clock'},
   ]);
   return (
-    <Phone tab="feed">
+    <Phone tab={isMobile ? undefined : 'feed'} noTab={isMobile}>
       {/* greeting header */}
       <div style={{
         padding: '14px 22px 8px',
@@ -401,9 +423,9 @@ const ScreenFeed = () => {
           <div style={{
             fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.14em',
             textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
-          }}>Good morning, Tanvir</div>
+          }}>Hi {profileName.split(' ')[0]}</div>
           <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)', lineHeight: 1.1, marginTop: 4 }}>
-            12 new jobs near you
+            {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} near you
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -467,13 +489,22 @@ const ScreenFeed = () => {
         Top matches today
       </SectionLabel>
       <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {TM_DATA.jobs.slice(0,2).map(j => <JobCard key={j.id} job={j}/>)}
+        {jobs.slice(0,2).map(j => <JobCard key={j.id} job={j}/>)}
       </div>
 
-      <SectionLabel>Also nearby</SectionLabel>
-      <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {TM_DATA.jobs.slice(2).map(j => <JobCard key={j.id} job={j} dim={j.match < 75}/>)}
-      </div>
+      {jobs.length > 2 && (
+        <>
+          <SectionLabel>Also nearby</SectionLabel>
+          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {jobs.slice(2).map(j => <JobCard key={j.id} job={j} dim={j.match < 75}/>)}
+          </div>
+        </>
+      )}
+      {jobs.length === 0 && (
+        <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--tm-ink-soft)', fontSize: 14 }}>
+          No jobs yet. Check back soon — guardians post throughout the day.
+        </div>
+      )}
     </Phone>
   );
 };
@@ -482,14 +513,27 @@ const ScreenFeed = () => {
 // Combined screen: top is the applied-to job, below is funnel + other apps.
 const ScreenApply = () => {
   const { go } = React.useContext(RouterCtx);
-  const job = TM_DATA.jobs[0];
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const isMobile = (typeof isMobileApp === 'function') && isMobileApp();
+  const meName = s ? (s.profile.name || 'You') : 'Tanvir Hasan';
+
+  // The "primary" application = the user's most recent one with an active state.
+  const allMine = s ? s.applications.filter(a => a.tutor && a.tutor.name === meName) : TM_DATA.applications;
+  const activeStates = ['applied','shortlisted','location-granted','trial-scheduled','hired'];
+  const primaryApp = allMine.find(a => activeStates.includes(a.state)) || allMine[0];
+  const primaryListing = primaryApp ? (s ? s.listings.find(l => l.id === primaryApp.jobId) : TM_DATA.jobs.find(j => j.id === primaryApp.jobId)) : null;
+  const job = primaryListing || (primaryApp && primaryApp.meta) || (s && s.listings[0]) || TM_DATA.jobs[0];
+
+  // Compute funnel stages based on application state.
+  const stateOrder = ['applied','shortlisted','location-granted','trial-scheduled','hired'];
+  const curIdx = primaryApp ? stateOrder.indexOf(primaryApp.state) : -1;
   const stages = [
-    { l: 'Applied', when: '8 min ago', done: true },
-    { l: 'Shortlisted', when: 'today', done: true, current: true },
-    { l: 'Location access', when: 'pending', done: false },
-    { l: 'Trial booked', when: '—', done: false },
-    { l: 'Confirmed', when: '—', done: false },
-  ];
+    { l: 'Applied', when: primaryApp ? primaryApp.when : '—' },
+    { l: 'Shortlisted', when: curIdx >= 1 ? 'today' : 'pending' },
+    { l: 'Location access', when: curIdx >= 2 ? 'granted' : 'pending' },
+    { l: 'Trial booked', when: curIdx >= 3 ? 'scheduled' : '—' },
+    { l: 'Confirmed', when: curIdx >= 4 ? 'hired' : '—' },
+  ].map((st, i) => ({ ...st, done: i <= curIdx, current: i === curIdx + 1 }));
 
   const stateChip = (state) => {
     const map = {
@@ -497,15 +541,30 @@ const ScreenApply = () => {
       'shortlisted':     { tone: 'primary', l: 'Shortlisted' },
       'location-granted':{ tone: 'accent',  l: 'Location granted' },
       'trial-scheduled': { tone: 'accent',  l: 'Trial booked' },
+      'hired':           { tone: 'accent',  l: 'Hired' },
       'rejected':        { tone: 'line',    l: 'Closed' },
     };
     const m = map[state] || map.applied;
     return <Chip tone={m.tone} size="sm">{m.l}</Chip>;
   };
 
+  if (!primaryApp) {
+    return (
+      <Phone tab={isMobile ? undefined : 'feed'} noTab={isMobile}>
+        <ScreenHeader back title="Applications" sub="Track your apps"/>
+        <div style={{ padding: '40px 22px', textAlign: 'center' }}>
+          <div style={{ fontSize: 14, color: 'var(--tm-ink-soft)', marginBottom: 18 }}>
+            You haven't applied to any jobs yet.
+          </div>
+          <Button icon="bolt" onClick={() => go('feed')}>Browse jobs</Button>
+        </div>
+      </Phone>
+    );
+  }
+
   return (
-    <Phone tab="feed">
-      <ScreenHeader back title="Your application" sub="Job j-114"/>
+    <Phone tab={isMobile ? undefined : 'feed'} noTab={isMobile}>
+      <ScreenHeader back title="Your application" sub={`Job ${primaryApp.jobId}`}/>
       {/* job summary */}
       <div style={{ padding: '0 22px 4px' }}>
         <Card pad={16}>
@@ -523,9 +582,11 @@ const ScreenApply = () => {
               fontVariantNumeric: 'tabular-nums',
             }}>৳{job.pay.toLocaleString()}</div>
           </div>
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--tm-line)', fontSize: 13, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
-            "{job.note}"
-          </div>
+          {job.note && (
+            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px dashed var(--tm-line)', fontSize: 13, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
+              "{job.note}"
+            </div>
+          )}
         </Card>
       </div>
 
@@ -582,30 +643,35 @@ const ScreenApply = () => {
       </div>
 
       {/* Other applications */}
-      <SectionLabel right={<span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>4 ACTIVE</span>}>
-        Other applications
-      </SectionLabel>
-      <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {TM_DATA.applications.slice(1).map(a => {
-          const j = TM_DATA.jobs.find(x => x.id === a.jobId) || a.meta;
-          const subj = (j.subjects || []).join(', ');
-          return (
-            <div key={a.id} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-              background: 'var(--tm-surface)', border: '1px solid var(--tm-line)', borderRadius: 14,
-              opacity: a.state === 'rejected' ? 0.55 : 1,
-            }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{subj}</div>
-                <div style={{ fontSize: 11.5, color: 'var(--tm-ink-muted)', marginTop: 2 }}>
-                  {j.area || j.meta?.area} · {j.level} · {a.when}
+      {allMine.length > 1 && (
+        <>
+          <SectionLabel right={<span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>{allMine.length - 1} OTHER</span>}>
+            Other applications
+          </SectionLabel>
+          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {allMine.filter(a => a.id !== primaryApp.id).map(a => {
+              const allJobs = s ? s.listings : TM_DATA.jobs;
+              const j = allJobs.find(x => x.id === a.jobId) || a.meta || {};
+              const subj = (j.subjects || []).join(', ') || a.jobId;
+              return (
+                <div key={a.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                  background: 'var(--tm-surface)', border: '1px solid var(--tm-line)', borderRadius: 14,
+                  opacity: a.state === 'rejected' ? 0.55 : 1,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{subj}</div>
+                    <div style={{ fontSize: 11.5, color: 'var(--tm-ink-muted)', marginTop: 2 }}>
+                      {j.area || (j.meta && j.meta.area) || '—'} · {j.level || ''} · {a.when}
+                    </div>
+                  </div>
+                  {stateChip(a.state)}
                 </div>
-              </div>
-              {stateChip(a.state)}
-            </div>
-          );
-        })}
-      </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </Phone>
   );
 };

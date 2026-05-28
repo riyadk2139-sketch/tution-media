@@ -164,16 +164,22 @@ const ClassCard = ({ c, first, muted }) => {
 
 // ─── 9. Masked Chat ──────────────────────────────────────────
 const ScreenChat = () => {
-  const [open, setOpen] = React.useState(false);
+  const [openId, setOpenId] = React.useState(null);
   return (
     <Phone tab="chat">
-      {!open && <ChatList onOpen={() => setOpen(true)}/>}
-      {open && <ChatThread onClose={() => setOpen(false)}/>}
+      {!openId && <ChatList onOpen={(id) => {
+        setOpenId(id);
+        if (typeof TmActions !== 'undefined') TmActions.markChatRead(id);
+      }}/>}
+      {openId && <ChatThread chatId={openId} onClose={() => setOpenId(null)}/>}
     </Phone>
   );
 };
 
-const ChatList = ({ onOpen }) => (
+const ChatList = ({ onOpen }) => {
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const chats = s ? s.chats : TM_DATA.chats;
+  return (
   <>
     <ScreenHeader title="Inbox" large
       right={<button style={{ background: 'transparent', border: 0, color: 'var(--tm-ink)', cursor: 'pointer', padding: 4 }}><Icon name="search" size={20}/></button>}/>
@@ -190,11 +196,11 @@ const ChatList = ({ onOpen }) => (
     </div>
 
     <div style={{ padding: '0 22px 0' }}>
-      {TM_DATA.chats.map((c, i) => (
-        <div key={c.id} onClick={i === 0 ? onOpen : undefined} style={{
+      {chats.map((c, i) => (
+        <div key={c.id} onClick={() => onOpen(c.id)} style={{
           display: 'flex', gap: 12, padding: '14px 0',
-          borderBottom: i < TM_DATA.chats.length - 1 ? '1px solid var(--tm-line-soft)' : 'none',
-          cursor: i === 0 ? 'pointer' : 'default',
+          borderBottom: i < chats.length - 1 ? '1px solid var(--tm-line-soft)' : 'none',
+          cursor: 'pointer',
         }}>
           {c.system ? (
             <div style={{
@@ -247,17 +253,52 @@ const ChatList = ({ onOpen }) => (
       ))}
     </div>
   </>
-);
+  );
+};
 
-const ChatThread = ({ onClose }) => {
-  const msgs = [
-    { from: 'them', t: 'Hi, I saw your application for my daughter\'s physics tuition.', tm: '8:58am' },
-    { from: 'them', t: 'BUET ME with 3.78 — looks great. Can you do 4 days a week?', tm: '8:59am' },
-    { from: 'me',   t: 'Hello sir, yes — 4 days/wk works. I can start this Saturday.', tm: '9:02am' },
-    { from: 'me',   t: 'Would you like to do a trial class first?', tm: '9:02am' },
-    { from: 'them', t: 'Yes please. Booking through the app.', tm: '9:10am', sys: 'Trial booked · Sat 6:30pm' },
-    { from: 'them', t: 'Approved your location request — see you tomorrow.', tm: '9:14am' },
-  ];
+const ChatThread = ({ chatId, onClose }) => {
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const chat = s ? s.chats.find(c => c.id === chatId) : null;
+  const messages = chat ? (chat.messages || []) : [];
+  const peerName = chat ? chat.name : 'Chat';
+  const [draft, setDraft] = React.useState('');
+  const scrollRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages.length]);
+
+  const send = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft('');
+    if (typeof TmActions !== 'undefined') TmActions.sendMessage(chatId, text);
+    // Echo back a polite acknowledgement after a small delay so the chat
+    // feels alive — only for non-system chats.
+    if (chat && !chat.system) {
+      setTimeout(() => {
+        if (typeof TmActions !== 'undefined') {
+          const replies = [
+            'Got it, thanks!',
+            'Sounds good.',
+            'Let me check and get back to you.',
+            'Perfect, see you then.',
+            'Noted.',
+          ];
+          TmActions.sendMessage(chatId, replies[Math.floor(Math.random() * replies.length)]);
+          // immediately flip the last message author to 'them' since sendMessage assumes me
+          // (simpler: directly mutate)
+          const st = tmStore.state;
+          tmStore.commit({ ...st,
+            chats: st.chats.map(c => c.id === chatId ? {
+              ...c, last: 'them',
+              messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { ...m, from: 'them' } : m),
+            } : c),
+          });
+        }
+      }, 1400);
+    }
+  };
 
   return (
     <>
@@ -273,13 +314,13 @@ const ChatThread = ({ onClose }) => {
         }}>
           <Icon name="chevL" size={18}/>
         </button>
-        <Avatar name="Mr. Rahman" size={36}/>
+        <Avatar name={peerName} size={36}/>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            Mr. Rahman <Icon name="lock" size={11} stroke={2}/>
+            {peerName} {chat && chat.masked && <Icon name="lock" size={11} stroke={2}/>}
           </div>
           <div style={{ fontSize: 11, color: 'var(--tm-ink-muted)', marginTop: 1 }}>
-            via Tution Media · masked
+            {chat && chat.system ? 'Tution Media · official' : 'via Tution Media · masked'}
           </div>
         </div>
         <button style={{
@@ -291,70 +332,57 @@ const ChatThread = ({ onClose }) => {
         </button>
       </div>
 
-      <div style={{ padding: '14px 18px 80px', background: 'var(--tm-paper)', minHeight: '100%' }}>
+      <div ref={scrollRef} style={{ padding: '14px 18px 12px', background: 'var(--tm-paper)' }}>
         <div style={{
           textAlign: 'center', fontSize: 10.5, fontFamily: 'var(--tm-font-mono)',
           letterSpacing: '0.14em', color: 'var(--tm-ink-muted)', textTransform: 'uppercase',
           marginBottom: 18,
-        }}>· Today ·</div>
+        }}>· {messages.length ? 'Conversation' : 'Say hi'} ·</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {msgs.map((m, i) => (
-            <React.Fragment key={i}>
-              <div style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
+          {messages.map((m, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
+              <div style={{
+                maxWidth: '78%', padding: '10px 13px',
+                background: m.from === 'me' ? 'var(--tm-primary)' : 'var(--tm-surface)',
+                color: m.from === 'me' ? 'var(--tm-primary-ink)' : 'var(--tm-ink)',
+                borderRadius: 14,
+                borderTopRightRadius: m.from === 'me' ? 4 : 14,
+                borderTopLeftRadius: m.from === 'them' ? 4 : 14,
+                border: m.from === 'them' ? '1px solid var(--tm-line)' : 'none',
+                fontSize: 13.5, lineHeight: 1.4,
+              }}>
+                {m.text}
                 <div style={{
-                  maxWidth: '78%', padding: '10px 13px',
-                  background: m.from === 'me' ? 'var(--tm-primary)' : 'var(--tm-surface)',
-                  color: m.from === 'me' ? 'var(--tm-primary-ink)' : 'var(--tm-ink)',
-                  borderRadius: 14,
-                  borderTopRightRadius: m.from === 'me' ? 4 : 14,
-                  borderTopLeftRadius: m.from === 'them' ? 4 : 14,
-                  border: m.from === 'them' ? '1px solid var(--tm-line)' : 'none',
-                  fontSize: 13.5, lineHeight: 1.4,
-                }}>
-                  {m.t}
-                  <div style={{
-                    fontSize: 10, marginTop: 4, fontFamily: 'var(--tm-font-mono)',
-                    opacity: 0.6, textAlign: 'right',
-                  }}>{m.tm}</div>
-                </div>
+                  fontSize: 10, marginTop: 4, fontFamily: 'var(--tm-font-mono)',
+                  opacity: 0.6, textAlign: 'right',
+                }}>{m.time}</div>
               </div>
-              {m.sys && (
-                <div style={{
-                  alignSelf: 'center', background: 'var(--tm-accent-soft)', color: 'var(--tm-accent)',
-                  padding: '6px 12px', borderRadius: 999, fontSize: 11.5, fontWeight: 600,
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                }}>
-                  <Icon name="check" size={12} stroke={2.4}/> {m.sys}
-                </div>
-              )}
-            </React.Fragment>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* composer */}
+      {/* composer — sticky so it stays put while messages scroll */}
       <div style={{
         position: 'sticky', bottom: 0, padding: '10px 14px',
         background: 'var(--tm-paper)', borderTop: '1px solid var(--tm-line)',
-        display: 'flex', alignItems: 'center', gap: 8,
+        display: 'flex', alignItems: 'center', gap: 8, zIndex: 2,
       }}>
-        <button style={{
-          width: 38, height: 38, borderRadius: 19, border: 0, background: 'transparent',
-          color: 'var(--tm-ink-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-        }}>
-          <Icon name="paperclip" size={18}/>
-        </button>
-        <div style={{
-          flex: 1, background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
-          borderRadius: 22, padding: '10px 16px', fontSize: 13.5, color: 'var(--tm-ink-muted)',
-        }}>
-          Reply to Mr. Rahman…
-        </div>
-        <button style={{
-          width: 38, height: 38, borderRadius: 19, background: 'var(--tm-primary)',
-          color: 'var(--tm-primary-ink)', border: 0, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', cursor: 'pointer',
+        <input value={draft} onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') send(); }}
+          placeholder={`Message ${peerName.split(' ')[0]}…`}
+          style={{
+            flex: 1, background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
+            borderRadius: 22, padding: '10px 16px', fontSize: 14, color: 'var(--tm-ink)',
+            outline: 'none', WebkitAppearance: 'none', minWidth: 0,
+          }}/>
+        <button onClick={send} style={{
+          width: 38, height: 38, borderRadius: 19,
+          background: draft.trim() ? 'var(--tm-primary)' : 'var(--tm-paper-deep)',
+          color: draft.trim() ? 'var(--tm-primary-ink)' : 'var(--tm-ink-muted)',
+          border: 0, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
         }}>
           <Icon name="send" size={16}/>
         </button>

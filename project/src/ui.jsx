@@ -316,6 +316,13 @@ const SectionLabel = ({ children, right }) => (
 // Provides paper background, status bar, scrollable body, optional tab bar.
 // Mounted inside <AndroidDevice> for the bezel.
 const Phone = ({ children, tab, dark = false, noStatus = false, noTab = false, route }) => {
+  // When running inside the real mobile shell, the shell renders its own
+  // status bar / tab bar — suppress the chrome here so we don't double up.
+  const inMobileShell = typeof window !== 'undefined' && window.__TM_MOBILE_SHELL__;
+  const suppressStatus = noStatus || inMobileShell;
+  const suppressTab    = noTab    || inMobileShell;
+  const suppressPill   = inMobileShell;
+
   return (
     <div style={{
       width: '100%', height: '100%',
@@ -326,21 +333,22 @@ const Phone = ({ children, tab, dark = false, noStatus = false, noTab = false, r
       WebkitFontSmoothing: 'antialiased',
       overflow: 'hidden',
     }}>
-      {!noStatus && <StatusBar dark={dark} />}
+      {!suppressStatus && <StatusBar dark={dark} />}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', position: 'relative' }}>
         {children}
       </div>
-      {!noTab && tab && <TabBar active={tab} />}
-      {/* gesture pill */}
-      <div style={{
-        height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: dark ? 'var(--tm-ink)' : 'var(--tm-paper)', flexShrink: 0,
-      }}>
+      {!suppressTab && tab && <TabBar active={tab} />}
+      {!suppressPill && (
         <div style={{
-          width: 108, height: 4, borderRadius: 2,
-          background: dark ? 'rgba(255,255,255,0.4)' : 'rgba(35,29,24,0.35)',
-        }}/>
-      </div>
+          height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: dark ? 'var(--tm-ink)' : 'var(--tm-paper)', flexShrink: 0,
+        }}>
+          <div style={{
+            width: 108, height: 4, borderRadius: 2,
+            background: dark ? 'rgba(255,255,255,0.4)' : 'rgba(35,29,24,0.35)',
+          }}/>
+        </div>
+      )}
     </div>
   );
 };

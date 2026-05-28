@@ -3,21 +3,35 @@
 
 // ─── 5. Verification gate ────────────────────────────────────
 const ScreenVerify = () => {
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const tier = s ? (s.profile.verifyTier || 0) : 2;
   const [submitted, setSubmitted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!submitted) return;
+    const t = setTimeout(() => {
+      if (typeof TmActions !== 'undefined') TmActions.advanceVerification();
+      setSubmitted(false);
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [submitted]);
+
+  // Tier states are derived from the user's current tier.
+  const stateFor = (n) => n < tier ? 'done' : n === tier ? 'current' : 'locked';
   const tiers = [
-    { n: 0, name: 'Phone', sub: 'Verified at signup', state: 'done', icon: 'phone',
+    { n: 0, name: 'Phone', sub: 'Verified at signup', icon: 'phone',
       help: '+880 1712 048 391' },
-    { n: 1, name: 'National ID', sub: 'Porichoy lookup', state: 'done', icon: 'id',
-      help: 'NID #1989 12345', when: '2 days ago' },
-    { n: 2, name: 'Education', sub: 'Student ID + board result', state: 'current', icon: 'book',
+    { n: 1, name: 'National ID', sub: 'Porichoy lookup', icon: 'id',
+      help: 'NID #1989 12345' },
+    { n: 2, name: 'Education', sub: 'Student ID + board result', icon: 'book',
       help: 'BUET · Mechanical Eng · ID 1804023' },
-    { n: 3, name: 'Reference check', sub: 'Manual · for premium jobs', state: 'locked', icon: 'shieldCheck',
+    { n: 3, name: 'Reference check', sub: 'Manual · for premium jobs', icon: 'shieldCheck',
       help: 'Unlocks ৳15k+/month placements' },
-  ];
+  ].map(t => ({ ...t, state: stateFor(t.n) }));
 
   return (
     <Phone tab="reputation">
-      <ScreenHeader back title="Verification" sub="Tier 2 of 4"/>
+      <ScreenHeader back title="Verification" sub={`Tier ${tier} of 4`}/>
 
       {/* trust ladder visual */}
       <div style={{ padding: '6px 22px 18px' }}>
@@ -36,23 +50,27 @@ const ScreenVerify = () => {
                 Trust score
               </div>
               <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 38, marginTop: 4, letterSpacing: '-0.01em', lineHeight: 1 }}>
-                Verified
+                {tier === 0 ? 'Unverified' : tier >= 4 ? 'Trusted' : 'Verified'}
               </div>
               <div style={{ fontSize: 12.5, opacity: 0.7, marginTop: 6, maxWidth: 220, lineHeight: 1.4 }}>
-                You can be hired. Complete tier 3 to unlock premium-rate jobs.
+                {tier === 0 && 'Complete tier 1 to start applying for jobs.'}
+                {tier === 1 && 'You can apply. Add education to be hired faster.'}
+                {tier === 2 && 'You can be hired. Complete tier 3 to unlock premium-rate jobs.'}
+                {tier === 3 && 'Premium tier reached. Add references for the top 1% badge.'}
+                {tier >= 4 && 'Highest trust tier. Top of the leaderboard.'}
               </div>
             </div>
             <div style={{ position: 'relative', width: 78, height: 78 }}>
               <svg width="78" height="78" viewBox="0 0 78 78">
                 <circle cx="39" cy="39" r="32" fill="none" stroke="currentColor" strokeOpacity="0.15" strokeWidth="6"/>
                 <circle cx="39" cy="39" r="32" fill="none" stroke="var(--tm-primary)" strokeWidth="6"
-                  strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * 0.4}
+                  strokeDasharray={2 * Math.PI * 32} strokeDashoffset={2 * Math.PI * 32 * (1 - tier / 4)}
                   transform="rotate(-90 39 39)" strokeLinecap="round"/>
               </svg>
               <div style={{
                 position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--tm-font-display)', fontSize: 22,
-              }}>2/4</div>
+              }}>{tier}/4</div>
             </div>
           </div>
         </div>

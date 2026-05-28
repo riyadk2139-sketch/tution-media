@@ -80,6 +80,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
 
 function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const [mobile] = React.useState(() => isMobileApp());
 
   // Inject font links once
   React.useEffect(() => {
@@ -92,6 +93,11 @@ function App() {
   }, []);
 
   const p = t.palette;
+
+  // Mobile / PWA: show the full-screen app, not the design canvas.
+  if (mobile) {
+    return <MobileApp palette={p}/>;
+  }
 
   return (
     <>

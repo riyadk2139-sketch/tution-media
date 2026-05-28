@@ -6,6 +6,11 @@
 const GuardianHome = () => {
   const { go } = React.useContext(RouterCtx);
   const [dismissed, setDismissed] = React.useState(false);
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const myName = s ? (s.profile.name || 'Mr. Rahman') : 'Mr. Rahman';
+  const myListings = s ? s.listings.filter(l => l.owner === 'self') : [];
+  const activeListing = myListings[0];
+  const applicantsForActive = activeListing && s ? s.applications.filter(a => a.jobId === activeListing.id) : [];
 
   return (
     <Phone tab="feed" noTab>
@@ -26,70 +31,109 @@ const GuardianHome = () => {
               </span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--tm-ink-muted)', marginTop: 2, fontFamily: 'var(--tm-font-mono)', letterSpacing: '0.06em' }}>
-              GUARDIAN · MR. RAHMAN
+              GUARDIAN · {myName.toUpperCase()}
             </div>
           </div>
           <div style={{ position: 'relative' }}>
-            <Avatar name="Mr. Rahman" size={38}/>
-            <div style={{
-              position: 'absolute', top: -2, right: -2, width: 12, height: 12,
-              borderRadius: 6, background: 'var(--tm-primary)', border: '2px solid var(--tm-paper)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 7, fontWeight: 700, color: 'var(--tm-primary-ink)',
-            }}>2</div>
+            <Avatar name={myName} size={38}/>
+            {applicantsForActive.length > 0 && (
+              <div style={{
+                position: 'absolute', top: -2, right: -2, minWidth: 14, height: 14, padding: '0 3px',
+                borderRadius: 7, background: 'var(--tm-primary)', border: '2px solid var(--tm-paper)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 8, fontWeight: 700, color: 'var(--tm-primary-ink)',
+              }}>{applicantsForActive.length}</div>
+            )}
           </div>
         </div>
 
-        {/* Active requirement card */}
-        <div style={{ padding: '10px 22px' }}>
-          <div style={{
-            borderRadius: 18, padding: '18px 18px 16px', position: 'relative', overflow: 'hidden',
-            background: 'var(--tm-ink)', color: 'var(--tm-paper)',
-          }}>
+        {/* Empty state: prompt to post first listing */}
+        {!activeListing && (
+          <div style={{ padding: '20px 22px' }}>
             <div style={{
-              position: 'absolute', inset: 0, opacity: 0.12, pointerEvents: 'none',
-              backgroundImage: 'radial-gradient(circle at 85% 105%, var(--tm-primary) 0%, transparent 60%)',
-            }}/>
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9.5, opacity: 0.55, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                    Active listing · j-114
-                  </div>
-                  <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, marginTop: 4, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
-                    Ifrat's Physics tutor
-                  </div>
-                </div>
-                <Chip tone="primary" size="sm" icon="bolt">Live</Chip>
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-                {['HSC · National', 'Physics', 'Higher Math', 'Dhanmondi 27', '৳12,000/mo'].map(t => (
-                  <div key={t} style={{
-                    padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.10)',
-                    fontSize: 11.5, fontWeight: 500,
-                  }}>{t}</div>
-                ))}
-              </div>
-
+              borderRadius: 18, padding: '24px 20px',
+              background: 'var(--tm-primary-soft)', textAlign: 'center',
+            }}>
               <div style={{
-                marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.12)',
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+                width: 56, height: 56, borderRadius: 16, background: 'var(--tm-primary)',
+                color: 'var(--tm-primary-ink)', display: 'inline-flex',
+                alignItems: 'center', justifyContent: 'center', marginBottom: 14,
               }}>
-                {[
-                  { v: '14', l: 'Applicants' },
-                  { v: '3', l: 'Shortlisted' },
-                  { v: '1', l: 'Trial booked' },
-                ].map(s => (
-                  <div key={s.l}>
-                    <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{s.v}</div>
-                    <div style={{ fontSize: 10.5, opacity: 0.65, marginTop: 3 }}>{s.l}</div>
-                  </div>
-                ))}
+                <Icon name="plus" size={26} stroke={2}/>
               </div>
+              <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, color: 'var(--tm-ink)', letterSpacing: '-0.01em' }}>
+                Post your first tuition
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--tm-ink-soft)', marginTop: 8, lineHeight: 1.5, maxWidth: 280, margin: '8px auto 16px' }}>
+                Tutors near you will see it instantly. Most listings get applicants within 1 hour.
+              </div>
+              <Button icon="bolt" onClick={() => go('g-new')}>Post a tuition</Button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Active requirement card */}
+        {activeListing && (
+          <div style={{ padding: '10px 22px' }}>
+            <div onClick={() => go('g-applicants', { listingId: activeListing.id })} style={{
+              borderRadius: 18, padding: '18px 18px 16px', position: 'relative', overflow: 'hidden',
+              background: 'var(--tm-ink)', color: 'var(--tm-paper)', cursor: 'pointer',
+            }}>
+              <div style={{
+                position: 'absolute', inset: 0, opacity: 0.12, pointerEvents: 'none',
+                backgroundImage: 'radial-gradient(circle at 85% 105%, var(--tm-primary) 0%, transparent 60%)',
+              }}/>
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9.5, opacity: 0.55, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                      Active listing · {activeListing.id}
+                    </div>
+                    <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, marginTop: 4, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+                      {activeListing.subjects.join(' + ')}
+                    </div>
+                  </div>
+                  <Chip tone="primary" size="sm" icon="bolt">Live</Chip>
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {[
+                    `${activeListing.level} · ${activeListing.curriculum}`,
+                    ...activeListing.subjects,
+                    activeListing.area,
+                    `৳${activeListing.pay.toLocaleString()}/mo`,
+                  ].map(t => (
+                    <div key={t} style={{
+                      padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.10)',
+                      fontSize: 11.5, fontWeight: 500,
+                    }}>{t}</div>
+                  ))}
+                </div>
+
+                <div style={{
+                  marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.12)',
+                  display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8,
+                }}>
+                  {[
+                    { v: String(applicantsForActive.length), l: 'Applicants' },
+                    { v: String(applicantsForActive.filter(a => a.state === 'shortlisted').length), l: 'Shortlisted' },
+                    { v: String(applicantsForActive.filter(a => a.state === 'trial-scheduled' || a.state === 'hired').length), l: 'Trial / hired' },
+                  ].map(st => (
+                    <div key={st.l}>
+                      <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{st.v}</div>
+                      <div style={{ fontSize: 10.5, opacity: 0.65, marginTop: 3 }}>{st.l}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <Button variant="secondary" full icon="plus" onClick={() => go('g-new')}>
+                Post another tuition
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* New applicants nudge */}
         {!dismissed && (
@@ -191,37 +235,66 @@ const GuardianHome = () => {
 };
 
 // ─── G-2. Applicants list ─────────────────────────────────────
-const GuardianApplicants = () => {
-  const { back, go } = React.useContext(RouterCtx);
-  const [filter, setFilter] = React.useState('all');
-  const [shortlisted, setShortlisted] = React.useState(new Set(['Tanvir Hasan', 'Nusrat Jahan', 'Rahim Chowdhury']));
+// Demo applicants we mix in alongside any real ones that have been generated.
+const DEMO_APPLICANTS = [
+  { id: 'demo-tanvir', name: 'Tanvir Hasan', inst: 'BUET · Mech. Eng', year: '3rd yr', match: 94, rating: 4.9, hires: 14, tier: 2, avail: 'Eve · 6–9pm' },
+  { id: 'demo-nusrat', name: 'Nusrat Jahan', inst: 'DU · Physics', year: '4th yr', match: 88, rating: 4.7, hires: 8, tier: 2, avail: 'Eve · 5–8pm' },
+  { id: 'demo-rahim',  name: 'Rahim Chowdhury', inst: 'BUET · EEE', year: '4th yr', match: 82, rating: 4.8, hires: 11, tier: 2, avail: 'Eve · 7–10pm' },
+  { id: 'demo-farhan', name: 'Farhan Islam', inst: 'IUT · CSE', year: 'Graduate', match: 77, rating: 4.5, hires: 5, tier: 1, avail: 'Wknd only' },
+  { id: 'demo-sadia',  name: 'Sadia Akter', inst: 'DU · Math', year: '3rd yr', match: 73, rating: 4.6, hires: 7, tier: 1, avail: 'Aft · 3–6pm' },
+  { id: 'demo-mehdi',  name: 'Mehdi Hassan', inst: 'BUET · CE', year: '4th yr', match: 68, rating: 4.4, hires: 3, tier: 1, avail: 'Eve · 6–9pm' },
+];
 
-  const applicants = [
-    { name: 'Tanvir Hasan', inst: 'BUET · Mech. Eng', year: '3rd yr', match: 94, rating: 4.9, hires: 14, tier: 2, avail: 'Eve · 6–9pm', subj: 'Phys · H.Math' },
-    { name: 'Nusrat Jahan', inst: 'DU · Physics', year: '4th yr', match: 88, rating: 4.7, hires: 8, tier: 2, avail: 'Eve · 5–8pm', subj: 'Phys · Math' },
-    { name: 'Rahim Chowdhury', inst: 'BUET · EEE', year: '4th yr', match: 82, rating: 4.8, hires: 11, tier: 2, avail: 'Eve · 7–10pm', subj: 'Phys · Chem' },
-    { name: 'Farhan Islam', inst: 'IUT · CSE', year: 'Graduate', match: 77, rating: 4.5, hires: 5, tier: 1, avail: 'Wknd only', subj: 'Math · Physics' },
-    { name: 'Sadia Akter', inst: 'DU · Math', year: '3rd yr', match: 73, rating: 4.6, hires: 7, tier: 1, avail: 'Aft · 3–6pm', subj: 'Math · H.Math' },
-    { name: 'Mehdi Hassan', inst: 'BUET · CE', year: '4th yr', match: 68, rating: 4.4, hires: 3, tier: 1, avail: 'Eve · 6–9pm', subj: 'Physics' },
-  ];
+const GuardianApplicants = () => {
+  const { back, go, params } = React.useContext(RouterCtx);
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const [filter, setFilter] = React.useState('all');
+
+  // Find the listing being viewed (from route params, or first 'self' listing,
+  // or fallback to a demo listing j-114).
+  const myListings = s ? s.listings.filter(l => l.owner === 'self') : [];
+  const listingId = (params && params.listingId) || (myListings[0] && myListings[0].id) || 'j-114';
+  const listing = s ? s.listings.find(l => l.id === listingId) : null;
+
+  // Real applications submitted to this listing
+  const realApps = s ? s.applications.filter(a => a.jobId === listingId).map(a => ({
+    id: a.id, name: a.tutor.name, inst: 'New applicant', year: '', match: 95,
+    rating: 4.6, hires: 0, tier: a.tutor.tier || 0, avail: 'Available now',
+    real: true, state: a.state,
+  })) : [];
+
+  // Combine real apps first, then demo applicants for visual richness.
+  const applicants = [...realApps, ...DEMO_APPLICANTS];
+
+  const shortlistedSet = new Set(applicants.filter(a => a.real && a.state === 'shortlisted').map(a => a.id));
+  // Add some demo ones to make the UI look populated
+  ['demo-tanvir','demo-nusrat','demo-rahim'].forEach(id => shortlistedSet.add(id));
+
+  const isShort = (a) => shortlistedSet.has(a.id);
+
+  const toggle = (a) => {
+    if (a.real) {
+      TmActions.shortlistApplicant(a.id, !isShort(a));
+    } else {
+      // For demo applicants, toggle in local set (visual only).
+      if (shortlistedSet.has(a.id)) shortlistedSet.delete(a.id); else shortlistedSet.add(a.id);
+      // Force update by tweaking router state via fake re-route
+      setFilter(filter === 'all' ? 'all ' : 'all'); // tiny hack to re-render
+      setTimeout(() => setFilter('all'), 0);
+    }
+  };
 
   const visible = filter === 'shortlisted'
-    ? applicants.filter(a => shortlisted.has(a.name))
+    ? applicants.filter(isShort)
     : applicants;
-
-  const toggle = (name) => setShortlisted(prev => {
-    const next = new Set(prev);
-    if (next.has(name)) next.delete(name); else next.add(name);
-    return next;
-  });
 
   return (
     <Phone noTab>
-      <ScreenHeader back title="Applicants" sub={`j-114 · ${applicants.length} total`}/>
+      <ScreenHeader back title="Applicants" sub={`${listingId} · ${applicants.length} total`}/>
 
       {/* Filter pills */}
       <div style={{ padding: '4px 22px 10px', display: 'flex', gap: 8 }}>
-        {[['all', `All ${applicants.length}`], ['shortlisted', `Shortlisted ${shortlisted.size}`]].map(([v, label]) => (
+        {[['all', `All ${applicants.length}`], ['shortlisted', `Shortlisted ${applicants.filter(isShort).length}`]].map(([v, label]) => (
           <div key={v} onClick={() => setFilter(v)} style={{
             padding: '7px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 13, fontWeight: 500,
             background: filter === v ? 'var(--tm-ink)' : 'var(--tm-surface)',
@@ -232,11 +305,11 @@ const GuardianApplicants = () => {
         ))}
       </div>
 
-      <div style={{ overflowY: 'auto', flex: 1, padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {visible.map((a, i) => {
-          const isShortlisted = shortlisted.has(a.name);
+      <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {visible.map((a) => {
+          const isShortlisted = isShort(a);
           return (
-            <div key={i} style={{
+            <div key={a.id} style={{
               borderRadius: 16, padding: '14px 16px',
               background: isShortlisted ? 'var(--tm-primary-soft)' : 'var(--tm-surface)',
               border: `1px solid ${isShortlisted ? 'transparent' : 'var(--tm-line)'}`,
@@ -268,13 +341,13 @@ const GuardianApplicants = () => {
               </div>
 
               <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                <button onClick={() => go('g-tutor')} style={{
+                <button onClick={() => go('g-tutor', { name: a.name })} style={{
                   flex: 1, padding: '9px 0', borderRadius: 10,
                   background: 'var(--tm-paper)', border: '1px solid var(--tm-line)',
                   color: 'var(--tm-ink)', fontSize: 12.5, fontWeight: 500, cursor: 'pointer',
                   fontFamily: 'var(--tm-font-ui)',
                 }}>View profile</button>
-                <button onClick={() => toggle(a.name)} style={{
+                <button onClick={() => toggle(a)} style={{
                   flex: 1, padding: '9px 0', borderRadius: 10,
                   background: isShortlisted ? 'var(--tm-ink)' : 'var(--tm-primary)',
                   border: 'none',
@@ -598,7 +671,17 @@ const GuardianHire = () => {
             {/* Decision */}
             <SectionLabel>Decision</SectionLabel>
             <div style={{ padding: '0 22px 30px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button onClick={() => setHired(true)} style={{
+              <button onClick={() => {
+                  // If there's a real application for the active listing, hire it.
+                  try {
+                    const s = tmStore.state;
+                    const myListings = s.listings.filter(l => l.owner === 'self');
+                    const lid = myListings[0] && myListings[0].id;
+                    const candidate = s.applications.find(a => a.jobId === lid && a.state !== 'rejected' && a.state !== 'hired');
+                    if (candidate) TmActions.hireApplicant(candidate.id);
+                  } catch (e) {}
+                  setHired(true);
+                }} style={{
                 width: '100%', padding: '16px', borderRadius: 14, border: 'none',
                 background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
                 fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--tm-font-ui)',
