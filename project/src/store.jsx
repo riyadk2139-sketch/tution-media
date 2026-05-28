@@ -389,9 +389,49 @@ const TmActions = {
     tmStore.patchProfile({ areas: next });
   },
 
+  setAvatar(dataUrl) {
+    tmStore.patchProfile({ avatar: dataUrl });
+  },
+
   resetDemo() {
     tmStore.reset();
   },
 };
 
-Object.assign(window, { tmStore, useStore, TmActions });
+// Open the device photo picker, downscale the chosen image, and persist it
+// as a data URL on the profile. Works on iOS/Android via a hidden file input.
+function pickAndSetAvatar() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.style.display = 'none';
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Downscale to max 256px to keep localStorage small.
+        const max = 256;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        try {
+          TmActions.setAvatar(canvas.toDataURL('image/jpeg', 0.82));
+        } catch (e) {
+          TmActions.setAvatar(reader.result);
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.body.appendChild(input);
+  input.click();
+  setTimeout(() => input.remove(), 1000);
+}
+
+Object.assign(window, { tmStore, useStore, TmActions, pickAndSetAvatar });

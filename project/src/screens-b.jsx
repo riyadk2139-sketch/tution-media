@@ -218,9 +218,26 @@ const UploadRow = ({ label, meta, done: initDone, cta }) => {
 // ─── 6. Demand "near you" heatmap ────────────────────────────
 const ScreenHeatmap = () => {
   const { go } = React.useContext(RouterCtx);
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const listings = s ? s.listings : TM_DATA.jobs;
+  const myAreas = s ? (s.profile.areas || []) : [];
+
+  // Real, computed stats from current listings.
+  const openJobs = listings.length;
+  const inMyAreas = listings.filter(l =>
+    myAreas.some(a => (l.area || '').toLowerCase().includes(a.toLowerCase()))
+  ).length;
+  const pays = listings.map(l => l.pay).filter(Boolean).sort((a, b) => a - b);
+  const median = pays.length ? pays[Math.floor(pays.length / 2)] : 0;
+  const medianLabel = median >= 1000 ? `${(median / 1000).toFixed(1)}k` : String(median);
+
+  // Suggest the highest-demand zone the tutor hasn't added yet.
+  const heat = s ? s.heatmap : TM_DATA.heatmap;
+  const suggestion = heat.find(z => !myAreas.some(a => z.name.toLowerCase().includes(a.toLowerCase())));
+
   return (
     <Phone tab="heatmap">
-      <ScreenHeader sub="This week · Dhanmondi cluster" title="Demand near you" large
+      <ScreenHeader sub="This week · near you" title="Demand near you" large
         right={
           <button style={{
             background: 'var(--tm-surface)', border: '1px solid var(--tm-line)', borderRadius: 12,
@@ -231,20 +248,23 @@ const ScreenHeatmap = () => {
           </button>
         }/>
 
-      {/* Hero stats */}
+      {/* Hero stats — computed from real listings */}
       <div style={{ padding: '0 22px 14px' }}>
         <Card pad={18}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
-            <Stat value="71" label="Open jobs"/>
-            <Stat value="14" label="In your areas"/>
-            <Stat value="8.7k" label="Median pay"/>
+            <Stat value={String(openJobs)} label="Open jobs"/>
+            <Stat value={String(inMyAreas)} label="In your areas"/>
+            <Stat value={`৳${medianLabel}`} label="Median pay"/>
           </div>
-          <div style={{
-            marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--tm-line)',
-            display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--tm-primary-deep)',
-          }}>
-            <Icon name="bolt" size={14}/> Add <strong>Lalmatia</strong> to your areas to see 6 more matches.
-          </div>
+          {suggestion && (
+            <div onClick={() => { if (typeof TmActions !== 'undefined') TmActions.toggleArea(suggestion.name); }} style={{
+              marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--tm-line)',
+              display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--tm-primary-deep)',
+              cursor: 'pointer',
+            }}>
+              <Icon name="bolt" size={14}/> Add <strong>{suggestion.name}</strong> to your areas to see {suggestion.requests} more requests.
+            </div>
+          )}
         </Card>
       </div>
 

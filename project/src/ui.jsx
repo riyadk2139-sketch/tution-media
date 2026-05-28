@@ -283,11 +283,19 @@ const VerifyBadge = ({ tier = 2, size = 'sm' }) => {
 };
 
 // ─── Avatar (initials, no images) ────────────────────────────
-const Avatar = ({ name, size = 40, tone }) => {
-  const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const Avatar = ({ name, size = 40, tone, src }) => {
+  const initials = (name || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
   // deterministic tone from initials
   const tones = ['#b8462a', '#3a5d4a', '#6b5b95', '#8e3520', '#4a6a3f', '#a9742a'];
   const bg = tone || tones[(initials.charCodeAt(0) || 0) % tones.length];
+  if (src) {
+    return (
+      <img src={src} alt={name} style={{
+        width: size, height: size, borderRadius: '50%', objectFit: 'cover',
+        flexShrink: 0, display: 'block',
+      }}/>
+    );
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',

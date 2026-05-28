@@ -497,7 +497,9 @@ const ScreenSettings = () => {
         <SectionLabel>Account</SectionLabel>
         <Card pad={14}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Avatar name={s.profile.name || 'You'} size={40}/>
+            <div onClick={() => typeof pickAndSetAvatar === 'function' && pickAndSetAvatar()} style={{ cursor: 'pointer' }}>
+              <Avatar name={s.profile.name || 'You'} size={40} src={s.profile.avatar}/>
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--tm-ink)' }}>{s.profile.name || 'You'}</div>
               <div style={{ fontSize: 12, color: 'var(--tm-ink-soft)' }}>

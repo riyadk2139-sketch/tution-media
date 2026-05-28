@@ -3,15 +3,34 @@
 
 // ─── 8. Schedule + Attendance ────────────────────────────────
 const ScreenSchedule = () => {
-  const days = [
-    { d: 'Sat', n: 23, classes: 1 },
-    { d: 'Sun', n: 24, classes: 2 },
-    { d: 'Mon', n: 25, classes: 2, today: true },
-    { d: 'Tue', n: 26, classes: 1 },
-    { d: 'Wed', n: 27, classes: 3 },
-    { d: 'Thu', n: 28, classes: 0 },
-    { d: 'Fri', n: 29, classes: 0 },
-  ];
+  const s = (typeof useStore === 'function') ? useStore() : null;
+  const classes = s ? s.classes : TM_DATA.classes;
+
+  // Build the current week (Sat–Fri, Bangladesh convention) around today.
+  const now = new Date();
+  const dow = now.getDay();                 // 0 Sun … 6 Sat
+  const offsetToSat = (dow + 1) % 7;        // days since last Saturday
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - offsetToSat);
+  const labels = ['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+  const todayIdx = offsetToSat;             // index of today within the strip
+  const countByDay = (idx) => {
+    if (idx === todayIdx) return classes.filter(c => c.date === 'Today').length;
+    if (idx === todayIdx + 1) return classes.filter(c => c.date === 'Tomorrow').length;
+    return 0;
+  };
+  const days = labels.map((d, i) => {
+    const dt = new Date(weekStart); dt.setDate(weekStart.getDate() + i);
+    return { d, n: dt.getDate(), classes: countByDay(i), today: i === todayIdx };
+  });
+
+  const monthName = now.toLocaleString('en-US', { month: 'long' });
+  const todayClasses = classes.filter(c => c.date === 'Today');
+  const tomorrowClasses = classes.filter(c => c.date === 'Tomorrow');
+
+  // Earnings = sum of pay for completed classes; "collected" = completed count.
+  const completed = classes.filter(c => c.state === 'completed');
+  const earnings = completed.reduce((sum, c) => sum + (c.payPerClass || 0), 0);
+  const scheduledTotal = classes.length;
 
   return (
     <Phone tab="schedule">
@@ -20,9 +39,9 @@ const ScreenSchedule = () => {
           <div style={{
             fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.14em',
             color: 'var(--tm-ink-muted)', textTransform: 'uppercase',
-          }}>May · Week 21</div>
+          }}>{monthName}</div>
           <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 30, color: 'var(--tm-ink)', lineHeight: 1.05, marginTop: 2 }}>
-            Today, Monday 25
+            Today, {now.toLocaleString('en-US', { weekday: 'long' })} {now.getDate()}
           </div>
         </div>
         <button style={{
@@ -65,7 +84,7 @@ const ScreenSchedule = () => {
         </div>
       </div>
 
-      {/* Earnings strip */}
+      {/* Earnings strip — computed from completed (attended) classes */}
       <div style={{ padding: '14px 22px 0' }}>
         <div style={{
           background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
@@ -74,13 +93,15 @@ const ScreenSchedule = () => {
         }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10, letterSpacing: '0.14em', opacity: 0.8, textTransform: 'uppercase' }}>
-              This week
+              Earned this week
             </div>
             <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, marginTop: 4, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-              ৳ 6,250
+              ৳ {earnings.toLocaleString()}
             </div>
             <div style={{ fontSize: 11.5, opacity: 0.85, marginTop: 6 }}>
-              Auto-collected for 5 of 7 students
+              {completed.length === 0
+                ? 'Mark a class attended to start earning'
+                : `Auto-collected for ${completed.length} of ${scheduledTotal} classes`}
             </div>
           </div>
           <div style={{
@@ -92,32 +113,40 @@ const ScreenSchedule = () => {
         </div>
       </div>
 
-      <SectionLabel right={<Chip tone="ink" size="sm">2 today</Chip>}>Classes today</SectionLabel>
+      <SectionLabel right={<Chip tone="ink" size="sm">{todayClasses.length} today</Chip>}>Classes today</SectionLabel>
       <div style={{ padding: '0 22px 4px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {TM_DATA.classes.filter(c => c.date === 'Today').map((c, i) => (
-          <ClassCard key={c.id} c={c} first={i === 0}/>
+        {todayClasses.length === 0 && (
+          <div style={{ fontSize: 13, color: 'var(--tm-ink-muted)', padding: '8px 2px' }}>No classes scheduled today.</div>
+        )}
+        {todayClasses.map((c, i) => (
+          <ClassCard key={c.id} c={c} first={i === 0} actionable/>
         ))}
       </div>
 
-      <SectionLabel>Tomorrow</SectionLabel>
-      <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {TM_DATA.classes.filter(c => c.date === 'Tomorrow').map(c => (
-          <ClassCard key={c.id} c={c} muted/>
-        ))}
-      </div>
+      {tomorrowClasses.length > 0 && (
+        <>
+          <SectionLabel>Tomorrow</SectionLabel>
+          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {tomorrowClasses.map(c => (
+              <ClassCard key={c.id} c={c} muted/>
+            ))}
+          </div>
+        </>
+      )}
     </Phone>
   );
 };
 
-const ClassCard = ({ c, first, muted }) => {
-  const [attended, setAttended] = React.useState(false);
+const ClassCard = ({ c, first, muted, actionable }) => {
+  const attended = c.state === 'completed';
+  const mark = () => { if (typeof TmActions !== 'undefined') TmActions.markAttendance(c.id, 'completed'); };
   return (
     <Card pad={0} style={{ overflow: 'hidden', opacity: muted ? 0.85 : 1 }}>
       <div style={{ display: 'flex', gap: 14, padding: '14px 16px' }}>
         <div style={{
           width: 56, textAlign: 'center', padding: '6px 0', borderRadius: 10,
-          background: first ? 'var(--tm-primary-soft)' : 'var(--tm-paper-deep)',
-          color: first ? 'var(--tm-primary-deep)' : 'var(--tm-ink-soft)',
+          background: attended ? 'var(--tm-accent-soft)' : first ? 'var(--tm-primary-soft)' : 'var(--tm-paper-deep)',
+          color: attended ? 'var(--tm-accent)' : first ? 'var(--tm-primary-deep)' : 'var(--tm-ink-soft)',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0,
         }}>
           <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 18, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
@@ -128,7 +157,10 @@ const ClassCard = ({ c, first, muted }) => {
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{c.student}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--tm-ink)' }}>{c.student}</span>
+            {attended && <Chip tone="accent" size="sm" icon="check">Done</Chip>}
+          </div>
           <div style={{ fontSize: 12.5, color: 'var(--tm-ink-soft)', marginTop: 3 }}>
             {c.subject}
           </div>
@@ -139,7 +171,7 @@ const ClassCard = ({ c, first, muted }) => {
           </div>
         </div>
       </div>
-      {first && (
+      {actionable && (
         <div style={{
           borderTop: '1px dashed var(--tm-line)', padding: '12px 16px',
           background: 'var(--tm-paper)', display: 'flex', gap: 8, alignItems: 'center',
@@ -152,7 +184,7 @@ const ClassCard = ({ c, first, muted }) => {
               Attended ✓
             </Button>
           ) : (
-            <Button size="sm" icon="check" onClick={() => setAttended(true)}>
+            <Button size="sm" icon="check" onClick={mark}>
               Mark attended
             </Button>
           )}
@@ -418,7 +450,18 @@ const ScreenReputation = () => {
       {/* Identity header — paper-textured */}
       <div style={{ padding: '14px 22px 18px', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Avatar name={t.name} size={64} tone="#b8462a"/>
+          <div onClick={() => typeof pickAndSetAvatar === 'function' && pickAndSetAvatar()}
+            style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+            <Avatar name={t.name} size={64} tone="#b8462a" src={t.avatar}/>
+            <div style={{
+              position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: 11,
+              background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: '2px solid var(--tm-paper)',
+            }}>
+              <Icon name="camera" size={11} stroke={2}/>
+            </div>
+          </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
               {t.name}

@@ -35,7 +35,7 @@ const GuardianHome = () => {
             </div>
           </div>
           <div style={{ position: 'relative' }}>
-            <Avatar name={myName} size={38}/>
+            <Avatar name={myName} size={38} src={s ? s.profile.avatar : undefined}/>
             {applicantsForActive.length > 0 && (
               <div style={{
                 position: 'absolute', top: -2, right: -2, minWidth: 14, height: 14, padding: '0 3px',

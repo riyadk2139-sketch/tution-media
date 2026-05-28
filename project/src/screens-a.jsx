@@ -182,12 +182,14 @@ const ScreenProfile = () => {
 
       {/* identity row */}
       <div style={{ padding: '6px 22px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{
+        <div onClick={() => typeof pickAndSetAvatar === 'function' && pickAndSetAvatar()} style={{
           width: 64, height: 64, borderRadius: 32, background: 'var(--tm-paper-deep)',
           display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--tm-ink-muted)',
-          border: '1px dashed var(--tm-line)',
+          border: '1px dashed var(--tm-line)', cursor: 'pointer', overflow: 'hidden', position: 'relative',
         }}>
-          <Icon name="camera" size={22}/>
+          {prof.avatar
+            ? <img src={prof.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }}/>
+            : <Icon name="camera" size={22}/>}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 22, color: 'var(--tm-ink)', lineHeight: 1.1 }}>{prof.name || 'You'}</div>
