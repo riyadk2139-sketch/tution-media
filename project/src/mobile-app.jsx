@@ -151,7 +151,7 @@ const ROUTE_TO_TAB = {
   'settings': 'settings',
 };
 const TAB_ROUTES = new Set(Object.keys(ROUTE_TO_TAB));
-const TUTOR_ONLY = new Set(['feed', 'heatmap', 'schedule', 'reputation', 'apply', 'verify', 'location', 'job']);
+const TUTOR_ONLY = new Set(['feed', 'heatmap', 'schedule', 'reputation', 'apply', 'verify', 'location', 'job', 'handoff', 'checkin']);
 
 const ALL_SCREENS = {
   // pre-onboarding
@@ -167,6 +167,8 @@ const ALL_SCREENS = {
   verify: ScreenVerify,
   location: ScreenLocation,
   profile: ScreenProfile,
+  handoff: ScreenHandoff,
+  checkin: ScreenStudentCheckin,
   // guardian flows
   'g-home': GuardianHome,
   'g-listings': ScreenGuardianListings,

@@ -157,6 +157,58 @@ const GuardianHome = () => {
           </div>
         )}
 
+        {/* Recent check-ins from the child — anonymous to the tutor */}
+        {s && (s.studentFeedback || []).length > 0 && (() => {
+          const fb = s.studentFeedback.slice(0, 3);
+          const emoji = ['', '😞', '😕', '😐', '🙂', '😄'];
+          return (
+            <>
+              <SectionLabel right={
+                <span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>
+                  PRIVATE · TUTOR CAN'T SEE
+                </span>
+              }>
+                From your child
+              </SectionLabel>
+              <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {fb.map(f => {
+                  const cls = s.classes.find(c => c.id === f.classId);
+                  const when = new Date(f.when).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                  return (
+                    <Card key={f.id} pad={14}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 12,
+                          background: 'var(--tm-paper-deep)', fontSize: 24,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>{emoji[f.mood] || '😐'}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--tm-ink-muted)' }}>
+                            <span style={{ fontFamily: 'var(--tm-font-mono)', letterSpacing: '0.06em' }}>{when.toUpperCase()}</span>
+                            {cls && <span>· {cls.subject}</span>}
+                          </div>
+                          {f.tags.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                              {f.tags.map(t => <Chip key={t} tone="neutral" size="sm">{t}</Chip>)}
+                            </div>
+                          )}
+                          {f.comment && (
+                            <div style={{
+                              marginTop: 10, padding: '8px 10px', borderLeft: '3px solid var(--tm-primary)',
+                              background: 'var(--tm-paper)', fontSize: 13, color: 'var(--tm-ink-soft)',
+                              fontStyle: 'italic', lineHeight: 1.4,
+                            }}>"{f.comment}"</div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
+
         {/* Trial reminder */}
         <SectionLabel>Upcoming trial</SectionLabel>
         <div style={{ padding: '0 22px' }}>

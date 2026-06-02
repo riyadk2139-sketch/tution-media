@@ -138,8 +138,14 @@ const ScreenSchedule = () => {
 };
 
 const ClassCard = ({ c, first, muted, actionable }) => {
+  const { go } = React.useContext(RouterCtx);
   const attended = c.state === 'completed';
-  const mark = () => { if (typeof TmActions !== 'undefined') TmActions.markAttendance(c.id, 'completed'); };
+  // After marking attended, prompt the tutor to hand the phone to the student
+  // for a quick anonymous check-in.
+  const mark = () => {
+    if (typeof TmActions !== 'undefined') TmActions.markAttendance(c.id, 'completed');
+    go('handoff', { classId: c.id });
+  };
   return (
     <Card pad={0} style={{ overflow: 'hidden', opacity: muted ? 0.85 : 1 }}>
       <div style={{ display: 'flex', gap: 14, padding: '14px 16px' }}>

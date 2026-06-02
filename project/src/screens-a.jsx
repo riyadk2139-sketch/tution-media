@@ -309,13 +309,15 @@ const ScreenProfile = () => {
 };
 
 // ─── 3. Live job feed ────────────────────────────────────────
-const JobCard = ({ job, dim }) => {
+const JobCard = ({ job, dim, isNew }) => {
   const { go } = React.useContext(RouterCtx);
   // Live-read store so the "applied" state reflects updates without re-mounting.
   const s = (typeof useStore === 'function') ? useStore() : null;
   const meName = s ? (s.profile.name || 'You') : null;
   const myApp = s ? s.applications.find(a => a.jobId === job.id && a.tutor && a.tutor.name === meName) : null;
   const applicantCount = s ? s.applications.filter(a => a.jobId === job.id).length : (job.applicants || 0);
+  // Compute the match dynamically from the tutor's current profile.
+  const match = (s && typeof computeMatch === 'function') ? computeMatch(s.profile, job) : (job.match || 0);
 
   const handleApply = (e) => {
     e.stopPropagation();
@@ -325,14 +327,18 @@ const JobCard = ({ job, dim }) => {
   };
 
   return (
-    <Card pad={0} onClick={() => go('job', { id: job.id })} style={{ opacity: dim ? 0.6 : 1, overflow: 'hidden' }}>
+    <Card pad={0} onClick={() => go('job', { id: job.id })} style={{
+      opacity: dim ? 0.6 : 1, overflow: 'hidden',
+      border: isNew ? '1.5px solid var(--tm-primary)' : undefined,
+    }}>
       {/* match score bar */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '12px 16px 0',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Chip tone="primary" icon="spark" size="sm">{job.match}% match</Chip>
+          <Chip tone="primary" icon="spark" size="sm">{match}% match</Chip>
+          {isNew && <Chip tone="ink" size="sm" icon="bolt">New</Chip>}
           <span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, color: 'var(--tm-ink-muted)', letterSpacing: '0.06em' }}>
             {job.posted.toUpperCase()}
           </span>
@@ -417,7 +423,7 @@ const ScreenFeed = () => {
   // Subscribe to the store so new listings appear immediately.
   const s = (typeof useStore === 'function') ? useStore() : null;
   const isMobile = (typeof isMobileApp === 'function') && isMobileApp();
-  const jobs = s ? s.listings : TM_DATA.jobs;
+  const allJobs = s ? s.listings : TM_DATA.jobs;
   const profileName = s ? (s.profile.name || 'Tanvir') : 'Tanvir';
   const [filters, setFilters] = React.useState([
     {l: 'All near me', on: true, ic: 'pin'},
@@ -426,6 +432,52 @@ const ScreenFeed = () => {
     {l: '৳10k+', on: false},
     {l: 'Evening', on: false, ic: 'clock'},
   ]);
+
+  // Score every listing, sort desc, split into top-matches vs. the rest.
+  const scored = allJobs
+    .map(j => ({ j, m: (s && typeof computeMatch === 'function') ? computeMatch(s.profile, j) : (j.match || 0) }))
+    .sort((a, b) => b.m - a.m);
+  const TOP_CUT = 85;
+  const top = scored.filter(x => x.m >= TOP_CUT);
+  const rest = scored.filter(x => x.m < TOP_CUT);
+
+  // "New since last visit" — listings added after the user's last seen marker.
+  const lastSeen = s ? s.lastSeenListingId : null;
+  const newSinceLast = (() => {
+    if (!lastSeen) return [];
+    const idx = allJobs.findIndex(l => l.id === lastSeen);
+    if (idx < 0) return allJobs;             // marker stale → treat all as new
+    return allJobs.slice(0, idx);            // anything before the marker is newer
+  })();
+  const newHighMatch = newSinceLast.filter(l =>
+    s && typeof computeMatch === 'function' && computeMatch(s.profile, l) >= TOP_CUT
+  );
+  const newIds = new Set(newSinceLast.map(l => l.id));
+
+  // Acknowledge that the tutor has now seen the newest listing.
+  React.useEffect(() => {
+    if (!s || !allJobs.length) return;
+    const newestId = allJobs[0].id;
+    if (s.lastSeenListingId !== newestId) {
+      // Defer a moment so the "new" badge has time to be visible if the user notices.
+      const t = setTimeout(() => TmActions.markListingsSeen(newestId), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [allJobs[0] && allJobs[0].id]);
+
+  // Notification permission state (lets us tailor the CTA).
+  const [notifPerm, setNotifPerm] = React.useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  );
+  const enableNotifs = async () => {
+    if (typeof tmRequestNotifPermission !== 'function') return;
+    const p = await tmRequestNotifPermission();
+    setNotifPerm(p);
+    if (p === 'granted' && typeof tmFireNotification === 'function') {
+      tmFireNotification('Notifications on', 'We\'ll ping you when a 85%+ match drops.');
+    }
+  };
+
   return (
     <Phone tab={isMobile ? undefined : 'feed'} noTab={isMobile}>
       {/* greeting header */}
@@ -439,7 +491,9 @@ const ScreenFeed = () => {
             textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
           }}>Hi {profileName.split(' ')[0]}</div>
           <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)', lineHeight: 1.1, marginTop: 4 }}>
-            {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} near you
+            {top.length > 0
+              ? `${top.length} top match${top.length === 1 ? '' : 'es'}`
+              : `${allJobs.length} ${allJobs.length === 1 ? 'job' : 'jobs'} near you`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -505,22 +559,67 @@ const ScreenFeed = () => {
         </span>
       </div>
 
-      <SectionLabel right={<span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>LIVE</span>}>
-        Top matches today
-      </SectionLabel>
-      <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {jobs.slice(0,2).map(j => <JobCard key={j.id} job={j}/>)}
-      </div>
+      {/* "new since last visit" banner — high-match listings the tutor hasn't seen */}
+      {newHighMatch.length > 0 && (
+        <div style={{ padding: '8px 22px 0' }}>
+          <div style={{
+            background: 'var(--tm-primary-soft)', borderRadius: 14,
+            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 10, background: 'var(--tm-primary)',
+              color: 'var(--tm-primary-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <Icon name="bolt" size={16}/>
+            </div>
+            <div style={{ flex: 1, fontSize: 13, color: 'var(--tm-primary-deep)', fontWeight: 600 }}>
+              {newHighMatch.length} new {newHighMatch.length === 1 ? 'match' : 'matches'} since you last checked
+              <div style={{ fontSize: 11.5, opacity: 0.8, marginTop: 2, fontWeight: 500 }}>
+                Top: {newHighMatch[0].subjects.join(' + ')} · {newHighMatch[0].area}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {jobs.length > 2 && (
+      {/* Notification opt-in — only show when permission hasn't been set */}
+      {notifPerm === 'default' && (
+        <div style={{ padding: '8px 22px 0' }}>
+          <div onClick={enableNotifs} style={{
+            background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
+            borderRadius: 14, padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+          }}>
+            <Icon name="bell" size={18}/>
+            <div style={{ flex: 1, fontSize: 12.5, color: 'var(--tm-ink-soft)' }}>
+              <span style={{ color: 'var(--tm-ink)', fontWeight: 600 }}>Be first to apply.</span> Get pinged when an 85%+ match drops.
+            </div>
+            <Chip tone="primary" size="sm">Turn on</Chip>
+          </div>
+        </div>
+      )}
+
+      {top.length > 0 && (
         <>
-          <SectionLabel>Also nearby</SectionLabel>
-          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {jobs.slice(2).map(j => <JobCard key={j.id} job={j} dim={j.match < 75}/>)}
+          <SectionLabel right={<span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>LIVE</span>}>
+            Top matches for you
+          </SectionLabel>
+          <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {top.map(({ j }) => <JobCard key={j.id} job={j} isNew={newIds.has(j.id)}/>)}
           </div>
         </>
       )}
-      {jobs.length === 0 && (
+
+      {rest.length > 0 && (
+        <>
+          <SectionLabel>{top.length > 0 ? 'Also nearby' : 'Available jobs'}</SectionLabel>
+          <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {rest.map(({ j, m }) => <JobCard key={j.id} job={j} dim={m < 50} isNew={newIds.has(j.id)}/>)}
+          </div>
+        </>
+      )}
+
+      {allJobs.length === 0 && (
         <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--tm-ink-soft)', fontSize: 14 }}>
           No jobs yet. Check back soon — guardians post throughout the day.
         </div>

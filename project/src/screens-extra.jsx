@@ -184,7 +184,9 @@ const ScreenJobDetail = () => {
       <div style={{ padding: '0 22px 18px' }}>
         <Card pad={18}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <Chip tone="primary" icon="spark" size="sm">{job.match}% match</Chip>
+            <Chip tone="primary" icon="spark" size="sm">
+              {(typeof computeMatch === 'function' ? computeMatch(s.profile, job) : job.match)}% match
+            </Chip>
             <span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, color: 'var(--tm-ink-muted)' }}>
               {job.posted.toUpperCase()}
             </span>
@@ -556,7 +558,209 @@ const ScreenSettings = () => {
   );
 };
 
+// ─── Handoff intro — privacy contract before the student takes over ──
+// Tutor sees this right after marking attended. They are asked to pass the
+// phone to the student. The student taps the continue button themselves.
+const ScreenHandoff = () => {
+  const { go, back, params } = React.useContext(RouterCtx);
+  const s = useStore();
+  const cls = s.classes.find(c => c.id === (params && params.classId)) || s.classes[0];
+  const studentName = cls ? cls.student : 'the student';
+  return (
+    <Phone noTab>
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        padding: '40px 28px 28px',
+      }}>
+        <div>
+          <div style={{
+            fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
+            textTransform: 'uppercase', color: 'var(--tm-ink-muted)', marginBottom: 18,
+          }}>Class attended ✓ · one more step</div>
+          <h1 style={{
+            fontFamily: 'var(--tm-font-display)', fontWeight: 400, fontSize: 32,
+            margin: 0, letterSpacing: '-0.01em', color: 'var(--tm-ink)', lineHeight: 1.1,
+          }}>
+            Please hand the<br/>phone to <em style={{ fontStyle: 'italic', color: 'var(--tm-primary)' }}>{studentName.split(' ')[0]}</em>.
+          </h1>
+          <div style={{ marginTop: 18, padding: '14px 16px', background: 'var(--tm-paper-deep)', borderRadius: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
+              <Icon name="lock" size={16} stroke={1.6}/>
+              <span>
+                They'll do a 15-second anonymous check-in.<br/>
+                You won't see their answers — only the guardian and the platform's matching engine will.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Button full size="lg" icon="arrR" onClick={() => go('checkin', { classId: cls && cls.id })}>
+            I'm {studentName.split(' ')[0]} · continue
+          </Button>
+          <Button variant="ghost" full size="md" onClick={back}>Skip for now</Button>
+        </div>
+      </div>
+    </Phone>
+  );
+};
+
+// ─── Student check-in (anonymous to the tutor) ────────────────
+// Reached after the tutor marks a class attended. The tutor passes the phone
+// to the student; the student rates how the class felt. The tutor never sees
+// the result — it goes to the guardian and feeds the platform's matching.
+const ScreenStudentCheckin = () => {
+  const { go, back, replace, params } = React.useContext(RouterCtx);
+  const s = useStore();
+  const classId = params && params.classId;
+  const cls = s.classes.find(c => c.id === classId) || s.classes[0];
+
+  const [mood, setMood] = React.useState(0);
+  const [tags, setTags] = React.useState([]);
+  const [comment, setComment] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const positiveTags = ['Explained clearly', 'I felt heard', 'Liked the pace', 'Got my doubts solved', 'Want more practice'];
+  const negativeTags = ['Felt rushed', 'Confused after class', 'Bored', 'Too much talking', 'Want a different style'];
+  const allTags = mood >= 4 ? positiveTags : mood <= 2 && mood > 0 ? negativeTags : [...positiveTags.slice(0, 3), ...negativeTags.slice(0, 2)];
+
+  const moods = [
+    { v: 1, em: '😞', l: 'Rough' },
+    { v: 2, em: '😕', l: 'Meh' },
+    { v: 3, em: '😐', l: 'OK' },
+    { v: 4, em: '🙂', l: 'Good' },
+    { v: 5, em: '😄', l: 'Great' },
+  ];
+
+  const toggleTag = (t) => setTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+
+  const submit = () => {
+    if (mood === 0) return;
+    TmActions.submitStudentFeedback(cls.id, { mood, tags, comment });
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <Phone noTab>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', padding: '0 32px', textAlign: 'center', gap: 18 }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 20, background: 'var(--tm-accent-soft)',
+            color: 'var(--tm-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="checkCircle" size={36} stroke={1.6}/>
+          </div>
+          <div>
+            <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 26, color: 'var(--tm-ink)', letterSpacing: '-0.01em' }}>
+              Thanks for sharing
+            </div>
+            <div style={{ fontSize: 13.5, color: 'var(--tm-ink-soft)', marginTop: 10, lineHeight: 1.5, maxWidth: 280 }}>
+              Your check-in is private. Your tutor won't see it — only your guardian and the platform, to help with matching.
+            </div>
+          </div>
+          <div style={{ marginTop: 8, width: '100%', maxWidth: 280 }}>
+            <Button full onClick={() => replace('schedule')}>Hand phone back to tutor</Button>
+          </div>
+        </div>
+      </Phone>
+    );
+  }
+
+  return (
+    <Phone noTab>
+      {/* Deliberately quiet, student-facing chrome. */}
+      <div style={{ padding: '18px 22px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{
+          fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
+          textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
+        }}>Student check-in · private</div>
+        <button onClick={back} style={{
+          background: 'transparent', border: 0, color: 'var(--tm-ink-muted)',
+          fontSize: 13, cursor: 'pointer',
+        }}>Skip</button>
+      </div>
+
+      <div style={{ padding: '12px 22px 0' }}>
+        <h1 style={{
+          fontFamily: 'var(--tm-font-display)', fontWeight: 400, fontSize: 28,
+          margin: 0, letterSpacing: '-0.01em', color: 'var(--tm-ink)', lineHeight: 1.15,
+        }}>
+          Hey — how did<br/>today's class feel?
+        </h1>
+        <p style={{ fontSize: 13, color: 'var(--tm-ink-soft)', margin: '12px 0 0', lineHeight: 1.5 }}>
+          Tap honestly. <strong style={{ color: 'var(--tm-ink)' }}>{cls ? cls.student : 'Your tutor'} won't see this</strong> — it
+          only helps your guardian and the app match you better next time.
+        </p>
+      </div>
+
+      {/* Mood */}
+      <div style={{ padding: '24px 18px 0', display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+        {moods.map(m => {
+          const on = mood === m.v;
+          return (
+            <div key={m.v} onClick={() => setMood(m.v)} style={{
+              flex: 1, padding: '14px 0', borderRadius: 14, cursor: 'pointer', textAlign: 'center',
+              background: on ? 'var(--tm-primary-soft)' : 'var(--tm-surface)',
+              border: `1.5px solid ${on ? 'var(--tm-primary)' : 'var(--tm-line)'}`,
+              transition: 'background .15s, border-color .15s',
+            }}>
+              <div style={{ fontSize: 30, lineHeight: 1 }}>{m.em}</div>
+              <div style={{
+                marginTop: 6, fontSize: 10.5, fontFamily: 'var(--tm-font-mono)',
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+                color: on ? 'var(--tm-primary-deep)' : 'var(--tm-ink-muted)',
+              }}>{m.l}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Tags — only shown after a mood is picked, so the prompts feel responsive */}
+      {mood > 0 && (
+        <>
+          <SectionLabel>What stood out?</SectionLabel>
+          <div style={{ padding: '0 22px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {allTags.map(t => {
+              const on = tags.includes(t);
+              return (
+                <div key={t} onClick={() => toggleTag(t)} style={{
+                  padding: '8px 14px', borderRadius: 999,
+                  background: on ? 'var(--tm-ink)' : 'transparent',
+                  color: on ? 'var(--tm-paper)' : 'var(--tm-ink-soft)',
+                  border: `1px solid ${on ? 'var(--tm-ink)' : 'var(--tm-line)'}`,
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer', userSelect: 'none',
+                }}>{t}</div>
+              );
+            })}
+          </div>
+
+          <SectionLabel>Anything to add? <span style={{ color: 'var(--tm-ink-soft)', textTransform: 'none', letterSpacing: 0, marginLeft: 6 }}>· optional</span></SectionLabel>
+          <div style={{ padding: '0 22px' }}>
+            <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3}
+              placeholder="One sentence in your own words…"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '12px 14px', fontSize: 14, color: 'var(--tm-ink)',
+                background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
+                borderRadius: 12, outline: 'none', WebkitAppearance: 'none',
+                resize: 'vertical', minHeight: 80, fontFamily: 'var(--tm-font-ui)',
+              }}/>
+          </div>
+        </>
+      )}
+
+      <div style={{ padding: '24px 22px 22px' }}>
+        <Button full size="lg" icon="check" onClick={submit}
+          style={{ opacity: mood > 0 ? 1 : 0.4 }}>
+          Send · stays anonymous
+        </Button>
+      </div>
+    </Phone>
+  );
+};
+
 Object.assign(window, {
   ScreenWelcome, ScreenJobDetail, ScreenListingNew,
-  ScreenGuardianListings, ScreenSettings,
+  ScreenGuardianListings, ScreenSettings, ScreenStudentCheckin, ScreenHandoff,
 });

@@ -140,6 +140,10 @@ function makeSeed() {
       },
     ],
     notifications: [],
+    studentFeedback: [],
+    // ID of the newest listing the tutor has acknowledged seeing on the feed.
+    // Used to show a "new since last visit" banner.
+    lastSeenListingId: null,
     heatmap: [
       { name: 'Dhanmondi 27', x: 0.42, y: 0.34, intensity: 1.0, requests: 18, top: 'Physics · HSC' },
       { name: 'Dhanmondi 15', x: 0.48, y: 0.48, intensity: 0.82, requests: 14, top: 'Math · Class 10' },
@@ -291,7 +295,29 @@ const TmActions = {
       owner: 'self',
     };
     tmStore.commit({ ...s, listings: [listing, ...s.listings] });
+
+    // Fire a real browser notification if the tutor (this device, role-switched
+    // out) would see this as a high-match job. Best-effort; silent if denied.
+    try {
+      const tutorProfile = { ...s.profile, role: 'tutor' };
+      const match = computeMatch(tutorProfile, listing);
+      if (match >= 85) {
+        tmFireNotification(
+          `${match}% match — ${listing.subjects.join(' + ')}`,
+          `${listing.area} · ৳${listing.pay.toLocaleString()}/mo · ${listing.guardian.name}`,
+          { tag: 'tm-match-' + id }
+        );
+      }
+    } catch (e) {}
+
     return id;
+  },
+
+  markListingsSeen(latestId) {
+    if (!latestId) return;
+    const s = tmStore.state;
+    if (s.lastSeenListingId === latestId) return;
+    tmStore.commit({ ...s, lastSeenListingId: latestId });
   },
 
   removeListing(listingId) {
@@ -393,10 +419,81 @@ const TmActions = {
     tmStore.patchProfile({ avatar: dataUrl });
   },
 
+  // ─ student check-in (anonymous to the tutor) ─
+  submitStudentFeedback(classId, feedback) {
+    const s = tmStore.state;
+    const entry = {
+      id: 'sf' + Date.now(),
+      classId,
+      mood: feedback.mood,         // 1..5
+      tags: feedback.tags || [],
+      comment: (feedback.comment || '').trim(),
+      when: new Date().toISOString(),
+    };
+    tmStore.commit({ ...s, studentFeedback: [entry, ...(s.studentFeedback || [])] });
+  },
+
   resetDemo() {
     tmStore.reset();
   },
 };
+
+// ─── Matching ──────────────────────────────────────────────────
+// Compute a 0–100 match score between a tutor profile and a listing.
+//   subjects 50 | level 20 | area 20 | verification 10 | + small fit boost
+// Pure function — recomputed at render so profile edits reorder the feed.
+function tmNormalize(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+}
+function tmLevelMatch(tutorLevels, listingLevel) {
+  const lTok = tmNormalize(listingLevel);
+  return (tutorLevels || []).some(tl => {
+    const tTok = tmNormalize(tl);
+    return lTok.some(t => tTok.includes(t)) || tTok.some(t => lTok.includes(t));
+  });
+}
+function tmAreaMatch(tutorAreas, listingArea) {
+  const la = (listingArea || '').toLowerCase();
+  return (tutorAreas || []).some(a => la.includes((a || '').toLowerCase()) && a.length > 1);
+}
+function computeMatch(profile, listing) {
+  if (!profile || !listing) return 0;
+  const subj = listing.subjects || [];
+  const tutSubj = profile.subjects || [];
+  const subjOverlap = subj.length === 0 ? 0
+    : subj.filter(x => tutSubj.includes(x)).length / subj.length;
+  const lvl = tmLevelMatch(profile.levels, listing.level) ? 1 : 0;
+  const area = tmAreaMatch(profile.areas, listing.area) ? 1 : 0;
+  const tier = Math.min((profile.verifyTier || 0) / 3, 1);
+
+  // Student-fit boost: average of recent anonymous check-ins.
+  const fb = (tmStore.state.studentFeedback || []);
+  const boost = fb.length === 0 ? 0
+    : Math.max(0, ((fb.reduce((s, f) => s + (f.mood || 3), 0) / fb.length) - 3) * 2); // 0..4
+
+  const score = 50 * subjOverlap + 20 * lvl + 20 * area + 10 * tier + boost;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+// ─── Notifications ─────────────────────────────────────────────
+// Best-effort browser Notifications API. Permission must be granted from a
+// user gesture; we just call this from button handlers.
+function tmRequestNotifPermission() {
+  if (typeof Notification === 'undefined') return Promise.resolve('unsupported');
+  if (Notification.permission === 'granted') return Promise.resolve('granted');
+  if (Notification.permission === 'denied') return Promise.resolve('denied');
+  return Notification.requestPermission();
+}
+function tmFireNotification(title, body, opts = {}) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png', ...opts });
+    n.onclick = () => { try { window.focus(); } catch (e) {} };
+  } catch (e) {}
+}
+
+Object.assign(window, { tmStore, useStore, TmActions, pickAndSetAvatar,
+  computeMatch, tmRequestNotifPermission, tmFireNotification });
 
 // Open the device photo picker, downscale the chosen image, and persist it
 // as a data URL on the profile. Works on iOS/Android via a hidden file input.
@@ -433,5 +530,3 @@ function pickAndSetAvatar() {
   input.click();
   setTimeout(() => input.remove(), 1000);
 }
-
-Object.assign(window, { tmStore, useStore, TmActions, pickAndSetAvatar });
