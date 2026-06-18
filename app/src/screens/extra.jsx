@@ -30,9 +30,20 @@ const ScreenWelcome = () => {
   const [name, setName] = React.useState(s.profile.name || '');
   const [area, setArea] = React.useState(s.profile.area || 'Dhanmondi');
 
-  const finish = () => {
-    TmActions.completeOnboarding({ role, name: name || (role === 'tutor' ? 'Tanvir' : 'Mr. Rahman'), area });
-    go(role === 'tutor' ? 'feed' : 'g-home');
+  const [saving, setSaving] = React.useState(false);
+  const finish = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await TmActions.completeOnboarding({
+        role,
+        name: name || (role === 'tutor' ? 'Tutor' : 'Guardian'),
+        area,
+      });
+      // Router redirects automatically once profile.role is set.
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -187,8 +198,9 @@ const ScreenJobDetail = () => {
   const s = useStore();
   const jobId = (params && params.id) || (s.listings[0] && s.listings[0].id);
   const job = s.listings.find(l => l.id === jobId) || s.listings[0];
-  const meName = s.profile.name || 'You';
-  const myApp = s.applications.find(a => a.jobId === (job && job.id) && a.tutor.name === meName);
+  // state.applications already only contains the current user's apps, so any
+  // matching jobId means "I applied".
+  const myApp = s.applications.find(a => a.jobId === (job && job.id));
 
   if (!job) return <Phone noTab><div style={{padding:22}}>Job not found.</div></Phone>;
 
@@ -308,12 +320,31 @@ const ScreenListingNew = () => {
   const [note, setNote] = React.useState('');
 
   const toggle = (set, v) => set.includes(v) ? set.filter(x => x !== v) : [...set, v];
-  const canSubmit = subjects.length > 0 && area && pay;
+  const payTaka = Number(String(pay).replace(/\D/g, '')) || 0;
+  const canSubmit = subjects.length > 0 && area.trim() && payTaka > 0;
+  const [posting, setPosting] = React.useState(false);
 
-  const submit = () => {
-    if (!canSubmit) return;
-    const id = TmActions.postListing({ subjects, level, curriculum, area, pay, days, window: windowSlot, gender, note });
-    go('g-home');
+  const submit = async () => {
+    if (!canSubmit || posting) return;
+    setPosting(true);
+    try {
+      // The API expects snake_case fields matching the SQL columns.
+      await TmActions.postListing({
+        subjects,
+        level,
+        curriculum,
+        area: area.trim(),
+        pay_taka: payTaka,
+        pay_unit: 'mo',
+        days_label: days,
+        time_window: windowSlot,
+        gender_pref: gender,
+        note,
+      });
+      go('g-home');
+    } finally {
+      setPosting(false);
+    }
   };
 
   return (
@@ -381,8 +412,8 @@ const ScreenListingNew = () => {
 
         <div style={{ paddingTop: 6 }}>
           <Button full size="lg" icon="bolt" onClick={submit}
-            style={{ opacity: canSubmit ? 1 : 0.4 }}>
-            Post listing
+            style={{ opacity: canSubmit && !posting ? 1 : 0.4 }}>
+            {posting ? 'Posting…' : 'Post listing'}
           </Button>
           <p style={{ marginTop: 12, fontSize: 11.5, color: 'var(--tm-ink-muted)', textAlign: 'center', lineHeight: 1.5 }}>
             Tutors near you will see this immediately. You'll get notified as applicants come in.
@@ -432,7 +463,8 @@ const Pills = ({ options, value, onChange }) => (
 const ScreenGuardianListings = () => {
   const { go } = React.useContext(RouterCtx);
   const s = useStore();
-  const mine = s.listings.filter(l => l.owner === 'self');
+  // Server-loaded list of *my* listings (includes filled / closed too).
+  const mine = s.myListings || [];
 
   return (
     <Phone noTab>
@@ -457,7 +489,7 @@ const ScreenGuardianListings = () => {
       ) : (
         <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {mine.map(l => {
-            const apps = s.applications.filter(a => a.jobId === l.id);
+            const apps = s.listingApplicants[l.id] || [];
             return (
               <Card key={l.id} pad={14} onClick={() => go('g-applicants', { listingId: l.id })}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
@@ -494,20 +526,26 @@ const ScreenGuardianListings = () => {
 
 // ─── Settings ──────────────────────────────────────────────────
 const ScreenSettings = () => {
-  const { go } = React.useContext(RouterCtx);
+  const { go, replace } = React.useContext(RouterCtx);
   const s = useStore();
   const role = s.profile.role;
 
-  const switchRole = (newRole) => {
+  const switchRole = async (newRole) => {
     if (newRole === role) return;
-    TmActions.setRole(newRole);
-    go(newRole === 'tutor' ? 'feed' : 'g-home');
+    await TmActions.setRole(newRole);
+    // Explicitly land on the new role's home — the router would otherwise
+    // keep the user on `settings` since it's valid for both roles.
+    replace(newRole === 'tutor' ? 'feed' : 'g-home');
   };
 
-  const reset = () => {
-    if (!confirm('Reset all demo data? Your profile and activity will be lost.')) return;
-    TmActions.resetDemo();
-    go('welcome');
+  const reset = async () => {
+    if (!confirm('Reset all data on this device? Your profile and activity will be lost.')) return;
+    await TmActions.resetDemo();
+  };
+
+  const signOut = async () => {
+    if (!confirm('Sign out of this device?')) return;
+    await TmActions.signOut();
   };
 
   return (
@@ -569,8 +607,9 @@ const ScreenSettings = () => {
           Built for Dhaka tutoring market.
         </div>
 
-        <div style={{ marginTop: 28 }}>
-          <Button variant="secondary" full onClick={reset} icon="refresh">Reset demo data</Button>
+        <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <Button variant="secondary" full onClick={signOut} icon="arrR">Sign out</Button>
+          <Button variant="ghost" full onClick={reset} icon="refresh">Reset local data</Button>
         </div>
       </div>
     </Phone>

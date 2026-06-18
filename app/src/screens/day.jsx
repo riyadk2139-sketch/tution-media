@@ -161,8 +161,8 @@ const ClassCard = ({ c, first, muted, actionable }) => {
   const attended = c.state === 'completed';
   // After marking attended, prompt the tutor to hand the phone to the student
   // for a quick anonymous check-in.
-  const mark = () => {
-    TmActions.markAttendance(c.id, 'completed');
+  const mark = async () => {
+    await TmActions.markAttendance(c.id, 'completed');
     go('handoff', { classId: c.id });
   };
   return (
@@ -235,7 +235,15 @@ const ScreenChat = () => {
 
 const ChatList = ({ onOpen }) => {
   const s = useStore();
-  const chats = s ? s.chats : [];
+  const threads = s.threads || [];
+  const fmtTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso); const now = new Date();
+    if (d.toDateString() === now.toDateString()) {
+      return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase().replace(' ', '');
+    }
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  };
   return (
   <>
     <ScreenHeader title="Inbox" large
@@ -252,62 +260,67 @@ const ChatList = ({ onOpen }) => {
       </div>
     </div>
 
+    {threads.length === 0 && (
+      <div style={{ padding: '40px 22px', textAlign: 'center', color: 'var(--tm-ink-soft)', fontSize: 14 }}>
+        No conversations yet. Chats open when you apply to a job (tutor) or shortlist an applicant (guardian).
+      </div>
+    )}
+
     <div style={{ padding: '0 22px 0' }}>
-      {chats.map((c, i) => (
-        <div key={c.id} onClick={() => onOpen(c.id)} style={{
-          display: 'flex', gap: 12, padding: '14px 0',
-          borderBottom: i < chats.length - 1 ? '1px solid var(--tm-line-soft)' : 'none',
-          cursor: 'pointer',
-        }}>
-          {c.system ? (
-            <div style={{
-              width: 44, height: 44, borderRadius: 12, background: 'var(--tm-ink)', color: 'var(--tm-paper)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <Icon name="shieldCheck" size={18}/>
-            </div>
-          ) : (
+      {threads.map((t, i) => {
+        const peerName = (t.other && t.other.display_name)
+          || (t.guardian && t.guardian.display_name)
+          || (t.tutor && t.tutor.display_name)
+          || 'Conversation';
+        const last = t.last_message;
+        const preview = last
+          ? (last.sender_id === s.user?.id ? 'You: ' : '') + (last.body || '').slice(0, 80)
+          : 'Tap to start';
+        return (
+          <div key={t.id} onClick={() => onOpen(t.id)} style={{
+            display: 'flex', gap: 12, padding: '14px 0',
+            borderBottom: i < threads.length - 1 ? '1px solid var(--tm-line-soft)' : 'none',
+            cursor: 'pointer',
+          }}>
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              <Avatar name={c.name} size={44}/>
-              {c.masked && (
-                <div style={{
-                  position: 'absolute', bottom: -2, right: -2,
-                  width: 18, height: 18, borderRadius: 9, background: 'var(--tm-surface)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '2px solid var(--tm-paper)', color: 'var(--tm-ink-muted)',
-                }}>
-                  <Icon name="lock" size={9} stroke={2.2}/>
-                </div>
-              )}
+              <Avatar name={peerName} size={44}/>
+              <div style={{
+                position: 'absolute', bottom: -2, right: -2,
+                width: 18, height: 18, borderRadius: 9, background: 'var(--tm-surface)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '2px solid var(--tm-paper)', color: 'var(--tm-ink-muted)',
+              }}>
+                <Icon name="lock" size={9} stroke={2.2}/>
+              </div>
             </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span style={{
-                fontSize: 14.5, fontWeight: c.unread ? 600 : 500, color: 'var(--tm-ink)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>{c.name}</span>
-              <span style={{ fontSize: 11, color: 'var(--tm-ink-muted)', fontFamily: 'var(--tm-font-mono)', flexShrink: 0 }}>
-                {c.time}
-              </span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 }}>
-              <span style={{
-                fontSize: 12.5, color: c.unread ? 'var(--tm-ink)' : 'var(--tm-ink-muted)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                fontWeight: c.unread ? 500 : 400,
-              }}>{c.preview}</span>
-              {c.unread > 0 && (
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <span style={{
-                  background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
-                  fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 999,
-                  fontFamily: 'var(--tm-font-mono)', flexShrink: 0,
-                }}>{c.unread}</span>
-              )}
+                  fontSize: 14.5, fontWeight: t.unread ? 600 : 500, color: 'var(--tm-ink)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>{peerName}</span>
+                <span style={{ fontSize: 11, color: 'var(--tm-ink-muted)', fontFamily: 'var(--tm-font-mono)', flexShrink: 0 }}>
+                  {fmtTime(t.last_msg_at)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 }}>
+                <span style={{
+                  fontSize: 12.5, color: t.unread ? 'var(--tm-ink)' : 'var(--tm-ink-muted)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  fontWeight: t.unread ? 500 : 400,
+                }}>{preview}</span>
+                {t.unread > 0 && (
+                  <span style={{
+                    background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
+                    fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 999,
+                    fontFamily: 'var(--tm-font-mono)', flexShrink: 0,
+                  }}>{t.unread}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </>
   );
@@ -315,46 +328,39 @@ const ChatList = ({ onOpen }) => {
 
 const ChatThread = ({ chatId, onClose }) => {
   const s = useStore();
-  const chat = s ? s.chats.find(c => c.id === chatId) : null;
-  const messages = chat ? (chat.messages || []) : [];
-  const peerName = chat ? chat.name : 'Chat';
+  const thread = s.threads.find(t => t.id === chatId);
+  const peerName = thread && (
+    (thread.other && thread.other.display_name)
+    || (thread.guardian && thread.guardian.display_name)
+    || (thread.tutor && thread.tutor.display_name)
+  ) || 'Chat';
+
+  // Messages are fetched on demand (we don't want them bundled with the
+  // thread list — could be huge). Re-fetch when the thread changes or when
+  // the user sends a new one.
+  const [messages, setMessages] = React.useState([]);
+  const [refreshKey, setRefreshKey] = React.useState(0);
+  React.useEffect(() => {
+    let cancelled = false;
+    import('../lib/api.js').then(api => api.listMessages(chatId)).then(rows => {
+      if (!cancelled) setMessages(rows || []);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [chatId, refreshKey]);
+
   const [draft, setDraft] = React.useState('');
   const scrollRef = React.useRef(null);
-
   React.useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages.length]);
 
-  const send = () => {
+  const meId = s.user?.id;
+  const send = async () => {
     const text = draft.trim();
     if (!text) return;
     setDraft('');
-    TmActions.sendMessage(chatId, text);
-    // Echo back a polite acknowledgement after a small delay so the chat
-    // feels alive — only for non-system chats.
-    if (chat && !chat.system) {
-      setTimeout(() => {
-        if (typeof TmActions !== 'undefined') {
-          const replies = [
-            'Got it, thanks!',
-            'Sounds good.',
-            'Let me check and get back to you.',
-            'Perfect, see you then.',
-            'Noted.',
-          ];
-          TmActions.sendMessage(chatId, replies[Math.floor(Math.random() * replies.length)]);
-          // immediately flip the last message author to 'them' since sendMessage assumes me
-          // (simpler: directly mutate)
-          const st = tmStore.state;
-          tmStore.commit({ ...st,
-            chats: st.chats.map(c => c.id === chatId ? {
-              ...c, last: 'them',
-              messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { ...m, from: 'them' } : m),
-            } : c),
-          });
-        }
-      }, 1400);
-    }
+    await TmActions.sendMessage(chatId, text);
+    setRefreshKey(k => k + 1);
   };
 
   return (
@@ -374,10 +380,10 @@ const ChatThread = ({ chatId, onClose }) => {
         <Avatar name={peerName} size={36}/>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            {peerName} {chat && chat.masked && <Icon name="lock" size={11} stroke={2}/>}
+            {peerName} <Icon name="lock" size={11} stroke={2}/>
           </div>
           <div style={{ fontSize: 11, color: 'var(--tm-ink-muted)', marginTop: 1 }}>
-            {chat && chat.system ? 'Tution Media · official' : 'via Tution Media · masked'}
+            via Tution Media · masked
           </div>
         </div>
         <button style={{
@@ -397,26 +403,32 @@ const ChatThread = ({ chatId, onClose }) => {
         }}>· {messages.length ? 'Conversation' : 'Say hi'} ·</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {messages.map((m, i) => (
-            <div key={i} style={{ display: 'flex', justifyContent: m.from === 'me' ? 'flex-end' : 'flex-start' }}>
-              <div style={{
-                maxWidth: '78%', padding: '10px 13px',
-                background: m.from === 'me' ? 'var(--tm-primary)' : 'var(--tm-surface)',
-                color: m.from === 'me' ? 'var(--tm-primary-ink)' : 'var(--tm-ink)',
-                borderRadius: 14,
-                borderTopRightRadius: m.from === 'me' ? 4 : 14,
-                borderTopLeftRadius: m.from === 'them' ? 4 : 14,
-                border: m.from === 'them' ? '1px solid var(--tm-line)' : 'none',
-                fontSize: 13.5, lineHeight: 1.4,
-              }}>
-                {m.text}
+          {messages.map((m, i) => {
+            const mine = m.sender_id === meId;
+            const time = m.created_at
+              ? new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase().replace(' ', '')
+              : '';
+            return (
+              <div key={m.id || i} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
                 <div style={{
-                  fontSize: 10, marginTop: 4, fontFamily: 'var(--tm-font-mono)',
-                  opacity: 0.6, textAlign: 'right',
-                }}>{m.time}</div>
+                  maxWidth: '78%', padding: '10px 13px',
+                  background: mine ? 'var(--tm-primary)' : 'var(--tm-surface)',
+                  color: mine ? 'var(--tm-primary-ink)' : 'var(--tm-ink)',
+                  borderRadius: 14,
+                  borderTopRightRadius: mine ? 4 : 14,
+                  borderTopLeftRadius: !mine ? 4 : 14,
+                  border: !mine ? '1px solid var(--tm-line)' : 'none',
+                  fontSize: 13.5, lineHeight: 1.4,
+                }}>
+                  {m.body}
+                  <div style={{
+                    fontSize: 10, marginTop: 4, fontFamily: 'var(--tm-font-mono)',
+                    opacity: 0.6, textAlign: 'right',
+                  }}>{time}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -575,8 +587,8 @@ const ScreenReputation = () => {
       {/* Subjects strip */}
       <SectionLabel>Teaches</SectionLabel>
       <div style={{ padding: '0 22px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {[].map(s => <Chip key={s} tone="primary" size="md">{s}</Chip>)}
-        {[].map(a => <Chip key={a} tone="accent" size="md" icon="pin">{a}</Chip>)}
+        {(t.subjects || []).map(sub => <Chip key={sub} tone="primary" size="md">{sub}</Chip>)}
+        {(t.areas || []).map(a => <Chip key={a} tone="accent" size="md" icon="pin">{a}</Chip>)}
       </div>
 
       {/* Reviews */}

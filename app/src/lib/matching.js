@@ -27,7 +27,7 @@ export function computeMatch(tutor, listing, { feedbackAvg = 0 } = {}) {
     : lSubjects.filter(x => tSubjects.includes(x)).length / lSubjects.length;
   const lvl = levelMatch(tutor.levels, listing.level) ? 1 : 0;
   const area = areaMatch(tutor.areas, listing.area) ? 1 : 0;
-  const tier = Math.min((tutor.verify_tier || 0) / 3, 1);
+  const tier = Math.min((tutor.verifyTier || 0) / 3, 1);
   const boost = feedbackAvg > 0 ? Math.max(0, (feedbackAvg - 3) * 2) : 0;
 
   const score = 50 * subjOverlap + 20 * lvl + 20 * area + 10 * tier + boost;

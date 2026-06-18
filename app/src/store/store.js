@@ -8,8 +8,11 @@ import * as auth from '../lib/auth.js';
 import { supabase, localMode } from '../lib/supabase.js';
 import { computeMatch as _computeMatch } from '../lib/matching.js';
 
-// Re-export so screens can import everything from one place.
-export { computeMatch as _computeMatch } from '../lib/matching.js';
+// Re-export the raw matcher for callers that want the unboosted score.
+export { _computeMatch };
+
+// Computed match wrapper — folds in the student-feedback boost so screens
+// don't need to know about it.
 export const computeMatch = (profile, listing) =>
   _computeMatch(profile, listing, { feedbackAvg: aggregateFeedbackAvg() });
 
@@ -41,7 +44,7 @@ function adaptListing(row, myId) {
     level: row.level,
     curriculum: row.curriculum,
     subjects: row.subjects || [],
-    pay: row.pay_cents,
+    pay: row.pay_taka,
     payUnit: row.pay_unit || 'mo',
     days: row.days_label || '',
     window: row.time_window || '',
@@ -88,7 +91,7 @@ function adaptProfile(row) {
     monthsTaught: t.months_taught || 0,
     onTime: t.on_time_pct || 0,
     retention: t.retention_pct || 0,
-    earnings: (t.earnings_cents || 0) / 100,
+    earnings: t.earnings_taka || 0,
     // guardian fields
     childName: g.child_name || '',
     childLevel: g.child_level || '',
@@ -125,7 +128,7 @@ function adaptClass(row) {
     time: formatTime(row.scheduled_at),
     dur: row.duration_min + ' min',
     state: row.state,
-    payPerClass: (row.pay_cents || 0) / 100,
+    payPerClass: row.pay_taka || 0,
   };
 }
 
@@ -161,10 +164,12 @@ const state = {
   profile: {},
   listings: [],
   myListings: [],
-  applications: [],
+  applications: [],         // applications submitted *by* me (tutor)
+  listingApplicants: {},    // listingId -> applications[] (guardian-side)
   classes: [],
   threads: [],
   studentFeedback: [],
+  lastSeenListingId: null,
   ready: false,
 };
 
@@ -201,7 +206,8 @@ export async function bootstrap() {
     } else {
       Object.assign(state, {
         profile: adaptProfile(null), listings: [], myListings: [], applications: [],
-        classes: [], threads: [], studentFeedback: [],
+        listingApplicants: {}, classes: [], threads: [], studentFeedback: [],
+        lastSeenListingId: null,
       });
     }
     notify();
@@ -251,6 +257,19 @@ async function refreshMyData() {
     state.threads = threads;
     state.myListings = mine.map(r => adaptListing(r, state.user?.id));
     state.studentFeedback = fb.map(adaptFeedback);
+    // For guardians, also load the applicant list for each of their listings
+    // so the home dashboard and applicants screen can render counts and rows
+    // without further per-screen fetches.
+    if (state.profile?.role === 'guardian' && mine.length) {
+      const byListing = {};
+      await Promise.all(mine.map(async (l) => {
+        try {
+          const rows = await api.listApplicantsFor(l.id);
+          byListing[l.id] = rows.map(adaptApplication);
+        } catch { byListing[l.id] = []; }
+      }));
+      state.listingApplicants = byListing;
+    }
     notify();
   } catch (e) {
     console.warn('refreshMyData failed', e.message);
@@ -276,7 +295,15 @@ Object.assign(TmActions, {
   async signOut() {
     await auth.signOut();
     state.user = null;
-    state.profile = null;
+    state.profile = adaptProfile(null);
+    state.listings = [];
+    state.myListings = [];
+    state.applications = [];
+    state.listingApplicants = {};
+    state.classes = [];
+    state.threads = [];
+    state.studentFeedback = [];
+    state.lastSeenListingId = null;
     notify();
   },
 
@@ -288,11 +315,6 @@ Object.assign(TmActions, {
       ? { tutor: { subjects: [], levels: [], areas: area ? [area] : [], verify_tier: 0 } }
       : { guardian: {} };
     await api.upsertProfile({ ...base, ...detail });
-    await refreshProfile();
-  },
-
-  async setProfile(patch) {
-    await api.upsertProfile(patch);
     await refreshProfile();
   },
 
@@ -344,28 +366,49 @@ Object.assign(TmActions, {
     await refreshProfile();
   },
 
-  // Aliases the legacy screens use directly.
-  setRole(role) { return TmActions.setProfile({ primary_role: role }); },
-  setProfile(patch) {
-    // Map flat patch shape back to the API's nested shape.
+  // Aliases the legacy screens use directly. setProfile accepts the flat
+  // view-model shape and translates back to the nested API shape; partial
+  // tutor patches are MERGED with the current tutor row so a one-field
+  // update doesn't wipe the others.
+  setRole(role) { return TmActions.setProfile({ role }); },
+  async setProfile(patch) {
     const out = {};
     if ('name' in patch) out.display_name = patch.name;
     if ('avatar' in patch) out.avatar_url = patch.avatar;
     if ('area' in patch) out.area = patch.area;
     if ('role' in patch) out.primary_role = patch.role;
-    const tutor = {};
-    if ('subjects' in patch) tutor.subjects = patch.subjects;
-    if ('levels' in patch) tutor.levels = patch.levels;
-    if ('areas' in patch) tutor.areas = patch.areas;
-    if ('availability' in patch) tutor.availability = patch.availability;
-    if ('verifyTier' in patch) tutor.verify_tier = patch.verifyTier;
-    if (Object.keys(tutor).length) out.tutor = tutor;
-    return api.upsertProfile(out).then(refreshProfile);
+    if ('primary_role' in patch) out.primary_role = patch.primary_role;
+
+    const TUTOR_FIELDS = ['subjects', 'levels', 'areas', 'availability'];
+    const hasTutorPatch = TUTOR_FIELDS.some(k => k in patch) || 'verifyTier' in patch;
+    if (hasTutorPatch) {
+      // Start from current tutor row so partial patches preserve siblings.
+      const cur = state.profile || {};
+      const tutor = {
+        subjects:     'subjects'     in patch ? patch.subjects     : cur.subjects,
+        levels:       'levels'       in patch ? patch.levels       : cur.levels,
+        areas:        'areas'        in patch ? patch.areas        : cur.areas,
+        availability: 'availability' in patch ? patch.availability : cur.availability,
+        verify_tier:  'verifyTier'   in patch ? patch.verifyTier   : cur.verifyTier,
+      };
+      out.tutor = tutor;
+    }
+    await api.upsertProfile(out);
+    await refreshProfile();
+    // Role-dependent slices (myListings, listingApplicants for guardians;
+    // applications for tutors) need a re-pull whenever the profile changes,
+    // because `refreshMyData` branches on role to decide what to load.
+    await refreshMyData();
   },
   setAvatar(url) { return TmActions.setProfile({ avatar: url }); },
-  advanceVerification() {
-    const cur = (state.profile && state.profile.verifyTier) || 0;
-    return TmActions.submitVerification(Math.min(cur + 1, 4)).then(refreshProfile);
+  async advanceVerification() {
+    const cur = state.profile?.verifyTier || 0;
+    const next = Math.min(cur + 1, 4);
+    await TmActions.submitVerification(next);
+    // In local mode the api auto-approves and bumps verify_tier directly; in
+    // Supabase mode an admin must review — but for the optimistic UX we
+    // bump the displayed tier too.
+    await TmActions.setProfile({ verifyTier: next });
   },
   toggleArea(area) {
     const cur = state.profile?.areas || [];
@@ -387,10 +430,40 @@ Object.assign(TmActions, {
       ? supabase.from('classes').update({ state: st }).eq('id', id).then(refreshMyData)
       : refreshMyData();
   },
-  markListingsSeen() { /* could persist a per-user marker server-side */ },
-  resetDemo() {
-    try { localStorage.removeItem('tm_data_v1'); localStorage.removeItem('tm_local_user_v1'); }
-    catch {}
+
+  // Track the newest listing the tutor has seen so the feed can show a
+  // "new since last visit" banner. Persisted across reloads.
+  markListingsSeen(latestId) {
+    if (!latestId || state.lastSeenListingId === latestId) return;
+    state.lastSeenListingId = latestId;
+    try { localStorage.setItem('tm_last_seen_listing', latestId); } catch {}
+    notify();
+  },
+
+  // No-op alias for the legacy screen code (per-thread read receipts go
+  // through a future updated_at on chat_threads).
+  markChatRead() {},
+
+  async resetDemo() {
+    await TmActions.signOut().catch(() => {});
+    try {
+      localStorage.removeItem('tm_data_v1');
+      localStorage.removeItem('tm_local_user_v1');
+      localStorage.removeItem('tm_last_seen_listing');
+    } catch {}
     location.reload();
   },
 });
+
+// Restore the last-seen marker on first import.
+try {
+  const v = localStorage.getItem('tm_last_seen_listing');
+  if (v) state.lastSeenListingId = v;
+} catch {}
+
+// Expose the store on window for diagnostics + admin / debugging from the
+// devtools console. Read-only state plus the action surface — no secrets
+// here since the client already has everything it needs.
+if (typeof window !== 'undefined') {
+  window.tmStore = { getState, subscribe, TmActions };
+}

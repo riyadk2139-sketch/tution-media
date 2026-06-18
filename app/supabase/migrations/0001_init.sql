@@ -45,7 +45,7 @@ create table public.tutor_profiles (
   months_taught   int      not null default 0,
   on_time_pct     int      not null default 100,
   retention_pct   int      not null default 0,
-  earnings_cents  bigint   not null default 0,
+  earnings_taka  bigint   not null default 0,
   updated_at      timestamptz not null default now()
 );
 
@@ -69,7 +69,7 @@ create table public.listings (
   level           text not null,
   curriculum      text not null,
   subjects        text[] not null default '{}',
-  pay_cents       bigint not null,
+  pay_taka       bigint not null,
   pay_unit        text   not null default 'mo' check (pay_unit in ('mo','class','hr')),
   days_label      text,                       -- '3 days/wk · 1.5 hr'
   time_window     text,                       -- 'Evenings · 6–9pm'
@@ -145,7 +145,7 @@ create table public.classes (
   area              text not null,
   scheduled_at      timestamptz not null,
   duration_min      int  not null default 60,
-  pay_cents         bigint not null default 0,
+  pay_taka         bigint not null default 0,
   state             text not null default 'upcoming' check (state in
                       ('upcoming','completed','cancelled','no-show')),
   created_at        timestamptz not null default now(),

@@ -148,11 +148,67 @@ export default function App({ palette = 'midnight' }) {
         WebkitFontSmoothing: 'antialiased',
         position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <Comp/>
-        </div>
-        {showTabs && <MobileTabBar role={role} active={ROUTE_TO_TAB[displayRoute]} onPick={(r) => replace(r)}/>}
+        {!s.ready ? (
+          // Bootstrap-in-flight splash. Without this the user sees the
+          // sign-in screen for a frame and then gets snapped to their home.
+          <div style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: 18,
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 16,
+              background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'Georgia,serif', fontSize: 42, lineHeight: 1,
+            }}>t</div>
+          </div>
+        ) : (
+          <>
+            <ErrorBoundary key={displayRoute}>
+              <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <Comp/>
+              </div>
+            </ErrorBoundary>
+            {showTabs && <MobileTabBar role={role} active={ROUTE_TO_TAB[displayRoute]} onPick={(r) => replace(r)}/>}
+          </>
+        )}
       </div>
     </RouterCtx.Provider>
   );
+}
+
+// Catch render exceptions per-screen so one broken screen doesn't take down
+// the whole app. The key={displayRoute} above resets the boundary on every
+// navigation, so a transient error doesn't permanently break the screen.
+class ErrorBoundary extends React.Component {
+  constructor(p) { super(p); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) { console.error('screen error', err, info); }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return (
+      <div style={{
+        flex: 1, padding: '40px 28px', display: 'flex', flexDirection: 'column',
+        gap: 14, alignItems: 'flex-start', justifyContent: 'center',
+      }}>
+        <div style={{
+          fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
+          textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
+        }}>Something went wrong</div>
+        <div style={{
+          fontFamily: 'var(--tm-font-display)', fontSize: 24, color: 'var(--tm-ink)', lineHeight: 1.1,
+        }}>This screen hit an unexpected error.</div>
+        <div style={{
+          padding: '12px 14px', background: 'var(--tm-paper-deep)', borderRadius: 12,
+          fontSize: 12, color: 'var(--tm-ink-soft)', fontFamily: 'var(--tm-font-mono)',
+          whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto', alignSelf: 'stretch',
+        }}>{this.state.err.message}</div>
+        <button onClick={() => this.setState({ err: null })} style={{
+          marginTop: 12, padding: '12px 22px', borderRadius: 999,
+          background: 'var(--tm-primary)', color: 'var(--tm-primary-ink)',
+          border: 0, fontWeight: 600, fontSize: 15, cursor: 'pointer',
+        }}>Try again</button>
+      </div>
+    );
+  }
 }

@@ -124,7 +124,7 @@ export async function postListing(input) {
     level: input.level,
     curriculum: input.curriculum,
     subjects: input.subjects,
-    pay_cents: input.pay_cents,
+    pay_taka: input.pay_taka,
     pay_unit: input.pay_unit || 'mo',
     days_label: input.days_label,
     time_window: input.time_window,
@@ -293,7 +293,7 @@ export async function hireApplicant(applicationId) {
       area: listing ? listing.area : '',
       scheduled_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
       duration_min: 90,
-      pay_cents: listing ? Math.round((listing.pay_cents || 0) / 12) : 0,
+      pay_taka: listing ? Math.round((listing.pay_taka || 0) / 12) : 0,
       state: 'upcoming',
       created_at: new Date().toISOString(),
     };
@@ -316,7 +316,7 @@ export async function hireApplicant(applicationId) {
     area: listing.area,
     scheduled_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
     duration_min: 90,
-    pay_cents: Math.round((listing.pay_cents || 0) / 12),
+    pay_taka: Math.round((listing.pay_taka || 0) / 12),
     state: 'upcoming',
   });
   await setApplicationState(applicationId, 'hired');
@@ -384,14 +384,15 @@ export async function findOrCreateThread({ guardian_id, tutor_id, listing_id = n
     }
     return t;
   }
-  // Try to find existing; if not, insert.
-  const { data: found } = await supabase
-    .from('chat_threads').select('*')
-    .eq('guardian_id', guardian_id).eq('tutor_id', tutor_id).eq('listing_id', listing_id)
-    .maybeSingle();
+  // Look for existing. .is() — not .eq() — is required for null comparison.
+  let query = supabase.from('chat_threads').select('*')
+    .eq('guardian_id', guardian_id).eq('tutor_id', tutor_id);
+  query = listing_id === null ? query.is('listing_id', null) : query.eq('listing_id', listing_id);
+  const { data: found } = await query.maybeSingle();
   if (found) return found;
   const { data, error } = await supabase.from('chat_threads')
-    .insert({ guardian_id, tutor_id, listing_id }).select().single();
+    .insert({ guardian_id, tutor_id, listing_id, last_msg_at: new Date().toISOString() })
+    .select().single();
   if (error) throw error;
   return data;
 }

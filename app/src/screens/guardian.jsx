@@ -26,10 +26,17 @@ const GuardianHome = () => {
   const { go } = React.useContext(RouterCtx);
   const [dismissed, setDismissed] = React.useState(false);
   const s = useStore();
-  const myName = s ? (s.profile.name || 'Mr. Rahman') : 'Mr. Rahman';
-  const myListings = s ? s.listings.filter(l => l.owner === 'self') : [];
+  const myName = s.profile.name || 'Guardian';
+  // Guardians read their own listings from state.myListings (loaded server-
+  // side by guardian id) rather than filtering the open-feed by ownership,
+  // which is brittle and won't include filled/closed ones.
+  const myListings = s.myListings || [];
   const activeListing = myListings[0];
-  const applicantsForActive = activeListing && s ? s.applications.filter(a => a.jobId === activeListing.id) : [];
+  // state.applications holds *my own* applications (empty for guardians).
+  // Per-listing applicants live in state.listingApplicants, keyed by id.
+  const applicantsForActive = activeListing
+    ? (s.listingApplicants[activeListing.id] || [])
+    : [];
 
   return (
     <Phone tab="feed" noTab>
@@ -154,10 +161,10 @@ const GuardianHome = () => {
           </div>
         )}
 
-        {/* New applicants nudge */}
-        {!dismissed && (
+        {/* New applicants nudge — only when there really are applicants. */}
+        {!dismissed && applicantsForActive.length > 0 && (
           <div style={{ padding: '0 22px 12px' }}>
-            <div onClick={() => go('g-applicants')} style={{
+            <div onClick={() => go('g-applicants', { listingId: activeListing.id })} style={{
               background: 'var(--tm-primary-soft)', borderRadius: 14, padding: '12px 14px',
               display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
             }}>
@@ -168,8 +175,10 @@ const GuardianHome = () => {
                 <Icon name="bell" size={17}/>
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tm-ink)' }}>2 new applicants since yesterday</div>
-                <div style={{ fontSize: 11.5, color: 'var(--tm-primary-deep)', marginTop: 2 }}>Tap to review · 98% + 88% match</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--tm-ink)' }}>
+                  {applicantsForActive.length} {applicantsForActive.length === 1 ? 'applicant' : 'applicants'} ready to review
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--tm-primary-deep)', marginTop: 2 }}>Tap to see who's interested</div>
               </div>
               <Icon name="chevR" size={16}/>
             </div>
@@ -321,37 +330,42 @@ const GuardianApplicants = () => {
   const s = useStore();
   const [filter, setFilter] = React.useState('all');
 
-  // Find the listing being viewed (from route params, or first 'self' listing,
-  // or fallback to a demo listing j-114).
-  const myListings = s ? s.listings.filter(l => l.owner === 'self') : [];
-  const listingId = (params && params.listingId) || (myListings[0] && myListings[0].id) || 'j-114';
-  const listing = s ? s.listings.find(l => l.id === listingId) : null;
+  // Pick the listing being reviewed. Route param wins; otherwise default to
+  // the user's first listing.
+  const myListings = s.myListings || [];
+  const listingId = (params && params.listingId) || (myListings[0] && myListings[0].id);
+  const listing = myListings.find(l => l.id === listingId);
 
-  // Real applications submitted to this listing
-  const realApps = s ? s.applications.filter(a => a.jobId === listingId).map(a => ({
-    id: a.id, name: a.tutor.name, inst: 'New applicant', year: '', match: 95,
-    rating: 4.6, hires: 0, tier: a.tutor.tier || 0, avail: 'Available now',
+  // Real applications submitted to this listing, normalized to the local
+  // applicant shape so we can mix in demo applicants for visual density.
+  const realApps = ((listingId && s.listingApplicants[listingId]) || []).map(a => ({
+    id: a.id,
+    name: a.tutor?.name || 'New applicant',
+    inst: 'Joined recently', year: '', match: 95,
+    rating: 4.6, hires: 0, tier: a.tutor?.tier || 0, avail: 'Available now',
     real: true, state: a.state,
-  })) : [];
+  }));
 
-  // Combine real apps first, then demo applicants for visual richness.
   const applicants = [...realApps, ...DEMO_APPLICANTS];
 
-  const shortlistedSet = new Set(applicants.filter(a => a.real && a.state === 'shortlisted').map(a => a.id));
-  // Add some demo ones to make the UI look populated
-  ['demo-tanvir','demo-nusrat','demo-rahim'].forEach(id => shortlistedSet.add(id));
-
-  const isShort = (a) => shortlistedSet.has(a.id);
+  // Shortlist state is local to this screen for demo applicants, while real
+  // applicants reflect server state via realApp.state === 'shortlisted'.
+  const [demoShortlist, setDemoShortlist] = React.useState(
+    () => new Set(['demo-tanvir', 'demo-nusrat', 'demo-rahim'])
+  );
+  const isShort = (a) => a.real
+    ? a.state === 'shortlisted' || a.state === 'location-granted' || a.state === 'trial-scheduled' || a.state === 'hired'
+    : demoShortlist.has(a.id);
 
   const toggle = (a) => {
     if (a.real) {
       TmActions.shortlistApplicant(a.id, !isShort(a));
     } else {
-      // For demo applicants, toggle in local set (visual only).
-      if (shortlistedSet.has(a.id)) shortlistedSet.delete(a.id); else shortlistedSet.add(a.id);
-      // Force update by tweaking router state via fake re-route
-      setFilter(filter === 'all' ? 'all ' : 'all'); // tiny hack to re-render
-      setTimeout(() => setFilter('all'), 0);
+      setDemoShortlist(prev => {
+        const next = new Set(prev);
+        if (next.has(a.id)) next.delete(a.id); else next.add(a.id);
+        return next;
+      });
     }
   };
 
@@ -745,10 +759,10 @@ const GuardianHire = () => {
               <button onClick={() => {
                   // If there's a real application for the active listing, hire it.
                   try {
-                    const s = tmStore.state;
-                    const myListings = s.listings.filter(l => l.owner === 'self');
-                    const lid = myListings[0] && myListings[0].id;
-                    const candidate = s.applications.find(a => a.jobId === lid && a.state !== 'rejected' && a.state !== 'hired');
+                    const st = tmStore.state;
+                    const lid = (st.myListings || [])[0]?.id;
+                    const apps = lid ? (st.listingApplicants[lid] || []) : [];
+                    const candidate = apps.find(a => a.state !== 'rejected' && a.state !== 'hired');
                     if (candidate) TmActions.hireApplicant(candidate.id);
                   } catch (e) {}
                   setHired(true);

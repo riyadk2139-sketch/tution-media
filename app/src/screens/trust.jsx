@@ -252,8 +252,7 @@ const ScreenHeatmap = () => {
   const medianLabel = median >= 1000 ? `${(median / 1000).toFixed(1)}k` : String(median);
 
   // Suggest the highest-demand zone the tutor hasn't added yet.
-  const heat = s ? s.heatmap : TM_HEATMAP;
-  const suggestion = heat.find(z => !myAreas.some(a => z.name.toLowerCase().includes(a.toLowerCase())));
+  const suggestion = TM_HEATMAP.find(z => !myAreas.some(a => z.name.toLowerCase().includes(a.toLowerCase())));
 
   return (
     <Phone tab="heatmap">

@@ -269,13 +269,19 @@ const ScreenProfile = () => {
         ))}
       </div>
 
-      {/* Areas (chips with map preview line) */}
-      <SectionLabel>Service areas <span style={{ color: 'var(--tm-ink-soft)', textTransform: 'none', letterSpacing: 0, marginLeft: 6 }}>· tap to add</span></SectionLabel>
+      {/* Service areas */}
+      <SectionLabel>Service areas <span style={{ color: 'var(--tm-ink-soft)', textTransform: 'none', letterSpacing: 0, marginLeft: 6 }}>· tap to remove</span></SectionLabel>
       <div style={{ padding: '0 22px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {[].map(a => (
-          <Chip key={a} tone="accent" icon="pin">{a}</Chip>
+        {(prof.areas || []).map(a => (
+          <span key={a} onClick={() => TmActions.toggleArea(a)} style={{ cursor: 'pointer' }}>
+            <Chip tone="accent" icon="pin">{a}</Chip>
+          </span>
         ))}
-        <Chip tone="line" icon="plus">Add area</Chip>
+        <span onClick={() => {
+          const v = window.prompt('Area to add'); if (v && v.trim()) TmActions.toggleArea(v.trim());
+        }} style={{ cursor: 'pointer' }}>
+          <Chip tone="line" icon="plus">Add area</Chip>
+        </span>
       </div>
 
       {/* Availability grid */}
@@ -332,9 +338,10 @@ const JobCard = ({ job, dim, isNew }) => {
   const { go } = React.useContext(RouterCtx);
   // Live-read store so the "applied" state reflects updates without re-mounting.
   const s = useStore();
-  const meName = s ? (s.profile.name || 'You') : null;
-  const myApp = s ? s.applications.find(a => a.jobId === job.id && a.tutor && a.tutor.name === meName) : null;
-  const applicantCount = s ? s.applications.filter(a => a.jobId === job.id).length : (job.applicants || 0);
+  // state.applications already contains *my* applications only — any row
+  // with this listing's jobId means "I applied". Don't compare by name.
+  const myApp = s.applications.find(a => a.jobId === job.id);
+  const applicantCount = myApp ? 1 : 0;     // for the tutor view we just show our own status
   // Compute the match dynamically from the tutor's current profile.
   const match = (s && typeof computeMatch === 'function') ? computeMatch(s.profile, job) : (job.match || 0);
 
@@ -653,14 +660,15 @@ const ScreenApply = () => {
   const { go } = React.useContext(RouterCtx);
   const s = useStore();
   const isMobile = true;
-  const meName = s ? (s.profile.name || 'You') : 'Tanvir Hasan';
 
-  // The "primary" application = the user's most recent one with an active state.
-  const allMine = s ? s.applications.filter(a => a.tutor && a.tutor.name === meName) : [];
+  // state.applications is already filtered to the current user.
+  const allMine = s.applications;
   const activeStates = ['applied','shortlisted','location-granted','trial-scheduled','hired'];
   const primaryApp = allMine.find(a => activeStates.includes(a.state)) || allMine[0];
-  const primaryListing = primaryApp ? (s ? s.listings.find(l => l.id === primaryApp.jobId) : [].find(j => j.id === primaryApp.jobId)) : null;
-  const job = primaryListing || (primaryApp && primaryApp.meta) || (s && s.listings[0]) || [][0];
+  // Prefer the joined listing on the application (so the tutor still sees a
+  // job they applied to even if it's since been filled and removed from the
+  // open feed).
+  const job = (primaryApp && primaryApp.listing) || (primaryApp && s.listings.find(l => l.id === primaryApp.jobId)) || s.listings[0];
 
   // Compute funnel stages based on application state.
   const stateOrder = ['applied','shortlisted','location-granted','trial-scheduled','hired'];
