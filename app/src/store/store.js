@@ -307,13 +307,11 @@ Object.assign(TmActions, {
     notify();
   },
 
-  async completeOnboarding({ role, name, area }) {
-    const base = {
-      display_name: name, area, primary_role: role,
-    };
+  async completeOnboarding({ role, name, area, childName }) {
+    const base = { display_name: name, area, primary_role: role };
     const detail = role === 'tutor'
       ? { tutor: { subjects: [], levels: [], areas: area ? [area] : [], verify_tier: 0 } }
-      : { guardian: {} };
+      : { guardian: { child_name: childName || null } };
     await api.upsertProfile({ ...base, ...detail });
     await refreshProfile();
   },

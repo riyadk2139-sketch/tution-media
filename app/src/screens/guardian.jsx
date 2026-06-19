@@ -237,78 +237,88 @@ const GuardianHome = () => {
           );
         })()}
 
-        {/* Trial reminder */}
-        <SectionLabel>Upcoming trial</SectionLabel>
-        <div style={{ padding: '0 22px' }}>
-          <Card pad={16}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Avatar name="Tanvir Hasan" size={42}/>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)' }}>Tanvir Hasan</span>
-                  <VerifyBadge tier={2}/>
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--tm-ink-soft)', marginTop: 2 }}>BUET · Mech. Eng · 3rd yr</div>
+        {/* Upcoming trial — only render when there's an actual trial-scheduled
+            class. Without this guard, every fresh guardian saw a fake "Tanvir
+            Hasan / BUET" trial that didn't exist. */}
+        {(() => {
+          const trial = (s.classes || []).find(c => c.state === 'trial-scheduled' || (c.state === 'upcoming' && new Date(c.scheduledAt) > new Date()));
+          if (!trial) return null;
+          const subject = trial.subject || '—';
+          const day = trial.date || new Date(trial.scheduledAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
+          return (
+            <>
+              <SectionLabel>Upcoming class</SectionLabel>
+              <div style={{ padding: '0 22px' }}>
+                <Card pad={16}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Avatar name={trial.student || 'Tutor'} size={42}/>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)' }}>{trial.student}</div>
+                      <div style={{ fontSize: 12, color: 'var(--tm-ink-soft)', marginTop: 2 }}>{trial.area}</div>
+                    </div>
+                    <Chip tone="accent" size="sm">{trial.state === 'trial-scheduled' ? 'Trial' : 'Class'}</Chip>
+                  </div>
+                  <div style={{ marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {[
+                      { l: 'Day', v: day },
+                      { l: 'Time', v: trial.time || '—' },
+                      { l: 'Subject', v: subject },
+                      { l: 'Duration', v: trial.dur || '—' },
+                    ].map(d => (
+                      <div key={d.l} style={{ padding: '9px 12px', background: 'var(--tm-paper)', borderRadius: 10 }}>
+                        <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9, letterSpacing: '0.14em', color: 'var(--tm-ink-muted)', textTransform: 'uppercase' }}>{d.l}</div>
+                        <div style={{ fontSize: 13, color: 'var(--tm-ink)', marginTop: 3, fontWeight: 500 }}>{d.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
               </div>
-              <Chip tone="accent" size="sm">Trial</Chip>
-            </div>
-            <div style={{
-              marginTop: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
-            }}>
-              {[
-                { l: 'Date', v: 'Saturday, Jun 1' },
-                { l: 'Time', v: '6:30 pm' },
-                { l: 'Subject', v: 'Physics + H. Math' },
-                { l: 'Duration', v: '1.5 hours' },
-              ].map(d => (
-                <div key={d.l} style={{ padding: '9px 12px', background: 'var(--tm-paper)', borderRadius: 10 }}>
-                  <div style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 9, letterSpacing: '0.14em', color: 'var(--tm-ink-muted)', textTransform: 'uppercase' }}>{d.l}</div>
-                  <div style={{ fontSize: 13, color: 'var(--tm-ink)', marginTop: 3, fontWeight: 500 }}>{d.v}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-              <Button variant="secondary" icon="phone" full>Message Tanvir</Button>
-              <Button icon="check" full onClick={() => go('g-hire')}>After trial →</Button>
-            </div>
-          </Card>
-        </div>
+            </>
+          );
+        })()}
 
-        {/* Shortlisted tutors */}
-        <SectionLabel right={
-          <span onClick={() => go('g-applicants')} style={{ fontSize: 12, color: 'var(--tm-primary-deep)', cursor: 'pointer', fontWeight: 500 }}>
-            See all 14
-          </span>
-        }>Top matches</SectionLabel>
-        <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {[
-            { name: 'Tanvir Hasan', inst: 'BUET · ME 3rd yr', match: 94, rating: 4.9, tier: 2, status: 'trial-booked' },
-            { name: 'Nusrat Jahan', inst: 'DU · Physics 4th yr', match: 88, rating: 4.7, tier: 2, status: 'shortlisted' },
-            { name: 'Rahim Chowdhury', inst: 'BUET · EEE 4th yr', match: 82, rating: 4.8, tier: 2, status: 'pending' },
-          ].map((t, i) => (
-            <div key={i} onClick={() => go('g-tutor')} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-              background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
-              borderRadius: 14, cursor: 'pointer',
-            }}>
-              <Avatar name={t.name} size={40}/>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)' }}>{t.name}</span>
-                  <VerifyBadge tier={t.tier}/>
-                </div>
-                <div style={{ fontSize: 11.5, color: 'var(--tm-ink-soft)', marginTop: 2 }}>{t.inst}</div>
+        {/* Top matches — only render when there are real applicants. The
+            previous mock displayed three made-up tutors for every guardian. */}
+        {(() => {
+          const all = Object.values(s.listingApplicants || {}).flat();
+          if (all.length === 0) return null;
+          // Highest-state apps first; cap at three.
+          const order = ['hired','trial-scheduled','location-granted','shortlisted','applied'];
+          const top = all
+            .slice()
+            .sort((a, b) => order.indexOf(a.state) - order.indexOf(b.state))
+            .slice(0, 3);
+          return (
+            <>
+              <SectionLabel right={
+                <span onClick={() => go('g-listings')} style={{ fontSize: 12, color: 'var(--tm-primary-deep)', cursor: 'pointer', fontWeight: 500 }}>
+                  See all {all.length}
+                </span>
+              }>Active applicants</SectionLabel>
+              <div style={{ padding: '0 22px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {top.map((a) => (
+                  <div key={a.id} onClick={() => go('g-applicants', { listingId: a.jobId })} style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                    background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
+                    borderRadius: 14, cursor: 'pointer',
+                  }}>
+                    <Avatar name={a.tutor?.name || 'Tutor'} size={40}/>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--tm-ink)' }}>{a.tutor?.name || 'Tutor'}</span>
+                        <VerifyBadge tier={a.tutor?.tier || 0}/>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--tm-ink-soft)', marginTop: 2 }}>{a.when}</div>
+                    </div>
+                    <Chip tone={a.state === 'hired' ? 'accent' : a.state === 'shortlisted' ? 'primary' : 'neutral'} size="sm">
+                      {a.state.replace('-', ' ')}
+                    </Chip>
+                  </div>
+                ))}
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{
-                  fontFamily: 'var(--tm-font-display)', fontSize: 18, color: 'var(--tm-ink)',
-                  lineHeight: 1, fontVariantNumeric: 'tabular-nums',
-                }}>{t.match}<span style={{ fontSize: 11, color: 'var(--tm-ink-muted)' }}>%</span></div>
-                <div style={{ fontSize: 10.5, color: 'var(--tm-ink-muted)', marginTop: 2 }}>match</div>
-              </div>
-            </div>
-          ))}
-        </div>
+            </>
+          );
+        })()}
       </div>
     </Phone>
   );

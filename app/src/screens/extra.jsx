@@ -29,6 +29,7 @@ const ScreenWelcome = () => {
   const [role, setRole] = React.useState(null);
   const [name, setName] = React.useState(s.profile.name || '');
   const [area, setArea] = React.useState(s.profile.area || 'Dhanmondi');
+  const [childName, setChildName] = React.useState(s.profile.childName || '');
 
   const [saving, setSaving] = React.useState(false);
   const finish = async () => {
@@ -39,6 +40,7 @@ const ScreenWelcome = () => {
         role,
         name: name || (role === 'tutor' ? 'Tutor' : 'Guardian'),
         area,
+        childName: role === 'guardian' ? (childName.trim() || 'My child') : null,
       });
       // Router redirects automatically once profile.role is set.
     } finally {
@@ -180,6 +182,28 @@ const ScreenWelcome = () => {
                 background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
                 borderRadius: 14, outline: 'none', WebkitAppearance: 'none',
               }}/>
+
+            {role === 'guardian' && (
+              <>
+                <label style={{
+                  marginTop: 20, display: 'block',
+                  fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.14em',
+                  textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
+                }}>Your child's name</label>
+                <input value={childName} onChange={(e) => setChildName(e.target.value)}
+                  placeholder="e.g. Ifrat"
+                  style={{
+                    marginTop: 8, padding: '14px 16px', fontFamily: 'var(--tm-font-ui)',
+                    fontSize: 16, color: 'var(--tm-ink)',
+                    background: 'var(--tm-surface)', border: '1px solid var(--tm-line)',
+                    borderRadius: 14, outline: 'none', WebkitAppearance: 'none',
+                  }}/>
+                <p style={{ marginTop: 8, fontSize: 11.5, color: 'var(--tm-ink-muted)', lineHeight: 1.4 }}>
+                  Only their first name — shown to your child during their anonymous post-class check-in.
+                </p>
+              </>
+            )}
+
             <div style={{ marginTop: 'auto', paddingTop: 32 }}>
               <Button full size="lg" icon="arrR" onClick={finish}>
                 Enter app
@@ -747,8 +771,9 @@ const ScreenStudentCheckin = () => {
           Hey — how did<br/>today's class feel?
         </h1>
         <p style={{ fontSize: 13, color: 'var(--tm-ink-soft)', margin: '12px 0 0', lineHeight: 1.5 }}>
-          Tap honestly. <strong style={{ color: 'var(--tm-ink)' }}>{cls ? cls.student : 'Your tutor'} won't see this</strong> — it
-          only helps your guardian and the app match you better next time.
+          Tap honestly. <strong style={{ color: 'var(--tm-ink)' }}>
+            {s.profile.name ? `${s.profile.name.split(' ')[0]} won't see this` : "Your tutor won't see this"}
+          </strong> — it only helps your guardian and the app match you better next time.
         </p>
       </div>
 

@@ -295,12 +295,16 @@ export async function hireApplicant(applicationId) {
     const app = s.applications.find(a => a.id === applicationId);
     if (!app) return null;
     const listing = s.listings.find(l => l.id === app.listing_id);
+    const guardian = listing && s.profiles[listing.guardian_id];
+    const studentName = (guardian && guardian.guardian_profiles && guardian.guardian_profiles.child_name)
+      || (guardian && guardian.display_name)
+      || 'Student';
     const cls = {
       id: uid(),
       tutor_id: app.tutor_id,
       guardian_id: listing ? listing.guardian_id : (await meId()),
       listing_id: app.listing_id,
-      student_name: 'Student',
+      student_name: studentName,
       subject_label: listing ? listing.subjects.join(', ') : 'General',
       area: listing ? listing.area : '',
       scheduled_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
@@ -324,11 +328,18 @@ export async function hireApplicant(applicationId) {
   const a = app.data;
   const listing = a.listing;
   if (!listing) throw new Error('Listing no longer exists');
+  // Pull the guardian's child name (if set during onboarding) so the
+  // class card shows the real student's name on both sides.
+  const { data: g } = await supabase.from('guardian_profiles')
+    .select('child_name').eq('id', listing.guardian_id).maybeSingle();
+  const { data: gp } = await supabase.from('profiles')
+    .select('display_name').eq('id', listing.guardian_id).maybeSingle();
+  const studentName = (g && g.child_name) || (gp && gp.display_name) || 'Student';
   const cls = await createClass({
     tutor_id: a.tutor_id,
     guardian_id: listing.guardian_id,
     listing_id: a.listing_id,
-    student_name: 'Student',
+    student_name: studentName,
     subject_label: listing.subjects.join(', '),
     area: listing.area,
     scheduled_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),

@@ -465,22 +465,25 @@ const ScreenReputation = () => {
   const { go } = React.useContext(RouterCtx);
   const s = useStore();
   const t = s ? s.profile : {};
-  // tier ladder
-  const tierLadder = [
-    { name: 'Apprentice', need: 0,  cur: false },
-    { name: 'Tutor', need: 5, cur: false, passed: true },
-    { name: 'Trusted', need: 12, cur: true },
-    { name: 'Expert', need: 25, cur: false },
-    { name: 'Mentor', need: 50, cur: false },
+  // Reputation tier — derived from real completedHires; only show when the
+  // tutor has at least one hire. Otherwise the ladder lies about their
+  // standing.
+  const hires = t.completedHires || 0;
+  const TIERS = [
+    { name: 'Apprentice', need: 0 },
+    { name: 'Tutor', need: 5 },
+    { name: 'Trusted', need: 12 },
+    { name: 'Expert', need: 25 },
+    { name: 'Mentor', need: 50 },
   ];
-  const reviews = [
-    { from: 'Mr. Rahman', when: 'May', rating: 5,
-      text: 'Tanvir is patient and explains physics in a way my daughter finally gets. On-time every class.' },
-    { from: 'Mrs. Akter', when: 'Apr', rating: 5,
-      text: 'Strong with maths. Saif\'s SSC marks jumped from C to A in 3 months.' },
-    { from: 'Ms. Karim', when: 'Apr', rating: 4,
-      text: 'Reliable. Could share more practice problems between classes.' },
-  ];
+  const curIdx = TIERS.reduce((acc, tl, i) => hires >= tl.need ? i : acc, 0);
+  const tierLadder = TIERS.map((tl, i) => ({
+    ...tl, cur: i === curIdx, passed: i < curIdx,
+  }));
+  // Reviews come from real applications/classes; until those exist on this
+  // device we have no data to show. Display the empty state instead of
+  // fabricating reviews from people who never engaged with this tutor.
+  const reviews = [];
 
   return (
     <Phone tab="reputation">
@@ -520,10 +523,33 @@ const ScreenReputation = () => {
           </button>
         </div>
 
-        <div style={{ marginTop: 14, fontSize: 13.5, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
-          {t.institution} · {t.department}, {t.year}. Teaching {(t.subjects || []).slice(0, 2).join(' & ')}
-          {(t.areas && t.areas.length) ? ` across ${t.areas.join(', ')}.` : '.'}
-        </div>
+        {/* Description: build it from real fields only — no broken
+            placeholders. */}
+        {(() => {
+          const credentials = [t.institution, t.department, t.year].filter(Boolean).join(' · ');
+          const subjects = (t.subjects || []).slice(0, 3).join(', ');
+          const areas = (t.areas || []).join(', ');
+
+          let body;
+          if (subjects && areas)      body = `Teaches ${subjects} across ${areas}.`;
+          else if (subjects)          body = `Teaches ${subjects}.`;
+          else if (areas)             body = `Available across ${areas}.`;
+          else                        body = null;
+
+          if (!credentials && !body) {
+            return (
+              <div style={{ marginTop: 14, fontSize: 13.5, color: 'var(--tm-ink-muted)', lineHeight: 1.5 }}>
+                Add subjects + areas in <Link onClick={() => go('profile')}>Edit profile</Link> to help guardians find you.
+              </div>
+            );
+          }
+          return (
+            <div style={{ marginTop: 14, fontSize: 13.5, color: 'var(--tm-ink-soft)', lineHeight: 1.5 }}>
+              {credentials && <>{credentials}. </>}
+              {body}
+            </div>
+          );
+        })()}
 
         <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
           <Button variant="secondary" size="sm" icon="shield" onClick={() => go('verify')}>Verification</Button>
@@ -531,44 +557,58 @@ const ScreenReputation = () => {
         </div>
       </div>
 
-      {/* Tier card */}
+      {/* Tier card — derived from real completedHires. */}
       <div style={{ padding: '0 22px 14px' }}>
         <div style={{
           background: 'var(--tm-ink)', color: 'var(--tm-paper)', borderRadius: 18,
           padding: '16px 18px', position: 'relative', overflow: 'hidden',
         }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{
-                fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
-                opacity: 0.6, textTransform: 'uppercase',
-              }}>Reputation tier</div>
-              <div style={{
-                fontFamily: 'var(--tm-font-display)', fontSize: 34, marginTop: 4,
-                letterSpacing: '-0.01em', lineHeight: 1,
-              }}>Trusted</div>
-              <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
-                12 of 25 hires to <strong style={{ color: 'var(--tm-primary-soft)' }}>Expert</strong>
-              </div>
-            </div>
-            <Icon name="award" size={42} stroke={1.2}/>
-          </div>
-          <div style={{ marginTop: 14 }}>
-            <div style={{ height: 6, background: 'currentColor', opacity: 0.18, borderRadius: 3, overflow: 'hidden' }}/>
-            <div style={{ height: 6, marginTop: -6, borderRadius: 3, overflow: 'hidden', position: 'relative' }}>
-              <div style={{ width: '48%', height: '100%', background: 'var(--tm-primary)' }}/>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-              {tierLadder.map((tl, i) => (
-                <div key={i} style={{
-                  fontFamily: 'var(--tm-font-mono)', fontSize: 9.5, letterSpacing: '0.08em',
-                  opacity: tl.cur ? 1 : (tl.passed ? 0.55 : 0.35),
-                  color: tl.cur ? 'var(--tm-primary-soft)' : 'inherit',
-                  textTransform: 'uppercase',
-                }}>{tl.name}</div>
-              ))}
-            </div>
-          </div>
+          {(() => {
+            const cur = TIERS[curIdx];
+            const next = TIERS[curIdx + 1];
+            const remaining = next ? next.need - hires : 0;
+            const segNeed = next ? (next.need - cur.need) : 1;
+            const segDone = next ? Math.max(0, hires - cur.need) : segNeed;
+            const pct = Math.min(100, Math.round((segDone / segNeed) * 100));
+            return (
+              <>
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{
+                      fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
+                      opacity: 0.6, textTransform: 'uppercase',
+                    }}>Reputation tier</div>
+                    <div style={{
+                      fontFamily: 'var(--tm-font-display)', fontSize: 34, marginTop: 4,
+                      letterSpacing: '-0.01em', lineHeight: 1,
+                    }}>{cur.name}</div>
+                    <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
+                      {next
+                        ? <>{hires} of {next.need} hires to <strong style={{ color: 'var(--tm-primary-soft)' }}>{next.name}</strong></>
+                        : <>Top tier · {hires} hires</>}
+                    </div>
+                  </div>
+                  <Icon name="award" size={42} stroke={1.2}/>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ height: 6, background: 'currentColor', opacity: 0.18, borderRadius: 3, overflow: 'hidden' }}/>
+                  <div style={{ height: 6, marginTop: -6, borderRadius: 3, overflow: 'hidden', position: 'relative' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: 'var(--tm-primary)' }}/>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                    {tierLadder.map((tl, i) => (
+                      <div key={i} style={{
+                        fontFamily: 'var(--tm-font-mono)', fontSize: 9.5, letterSpacing: '0.08em',
+                        opacity: tl.cur ? 1 : (tl.passed ? 0.55 : 0.35),
+                        color: tl.cur ? 'var(--tm-primary-soft)' : 'inherit',
+                        textTransform: 'uppercase',
+                      }}>{tl.name}</div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -592,9 +632,23 @@ const ScreenReputation = () => {
       </div>
 
       {/* Reviews */}
-      <SectionLabel right={<span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>{reviews.length} OF 11</span>}>
+      <SectionLabel right={
+        reviews.length > 0
+          ? <span style={{ fontFamily: 'var(--tm-font-mono)', fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--tm-ink-muted)' }}>{reviews.length}</span>
+          : null
+      }>
         Verified reviews
       </SectionLabel>
+      {reviews.length === 0 && (
+        <div style={{ padding: '4px 22px 24px' }}>
+          <div style={{
+            padding: '14px 16px', borderRadius: 14, background: 'var(--tm-paper-deep)',
+            fontSize: 13, color: 'var(--tm-ink-soft)', lineHeight: 1.5,
+          }}>
+            No reviews yet — they appear here after guardians rate you on completed engagements.
+          </div>
+        </div>
+      )}
       <div style={{ padding: '0 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {reviews.map((r, i) => (
           <div key={i} style={{
@@ -627,7 +681,8 @@ const ScreenReputation = () => {
         ))}
       </div>
 
-      {/* Earnings card */}
+      {/* Earnings card — only meaningful once there's real data; otherwise
+          the prior month's delta is a fabrication. */}
       <SectionLabel>Earnings</SectionLabel>
       <div style={{ padding: '0 22px 24px' }}>
         <Card pad={16}>
@@ -637,13 +692,15 @@ const ScreenReputation = () => {
                 This month
               </div>
               <div style={{ fontFamily: 'var(--tm-font-display)', fontSize: 30, color: 'var(--tm-ink)', marginTop: 4, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                ৳ {t.earnings.toLocaleString()}
+                ৳ {(t.earnings || 0).toLocaleString()}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--tm-accent)', marginTop: 6 }}>
-                ↑ ৳3,200 vs April · verified income
+              <div style={{ fontSize: 12, color: 'var(--tm-ink-soft)', marginTop: 6 }}>
+                {(t.earnings || 0) > 0
+                  ? 'Auto-collected from completed classes'
+                  : 'Mark a class attended to start earning'}
               </div>
             </div>
-            <BarSpark/>
+            {(t.earnings || 0) > 0 && <BarSpark/>}
           </div>
         </Card>
       </div>
