@@ -15,25 +15,39 @@ export function ScreenSignIn() {
   const [busy, setBusy] = React.useState(false);
   const [hint, setHint] = React.useState('');
 
-  const fullPhone = () => phone.startsWith('+') ? phone : '+880' + phone.replace(/\D/g, '');
+  // Bangladesh mobile numbers are 10 digits after +880 (1XXXXXXXXX).
+  // Accept user input with spaces/dashes; normalize at send time.
+  const normalizedDigits = () => phone.replace(/\D/g, '');
+  const fullPhone = () => phone.startsWith('+') ? phone : '+880' + normalizedDigits();
+  const phoneValid = () => normalizedDigits().length === 10;
 
   const requestCode = async () => {
-    if (!phone) return setError('Enter a phone number');
+    if (busy) return;
+    const d = normalizedDigits();
+    if (d.length === 0) return setError('Enter a phone number');
+    if (d.length !== 10) return setError('Bangladesh numbers are 10 digits (e.g. 1712 048 391)');
     setBusy(true); setError('');
-    const r = await sendOtp(fullPhone());
-    setBusy(false);
-    if (!r.ok) return setError(r.error || 'Could not send code');
-    if (r.hint) setHint(r.hint);
-    setStep('otp');
+    try {
+      const r = await sendOtp(fullPhone());
+      if (!r.ok) return setError(r.error || 'Could not send code');
+      if (r.hint) setHint(r.hint);
+      setStep('otp');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const submitCode = async () => {
-    if (code.length !== 6) return setError('6-digit code');
+    if (busy) return;
+    if (code.length !== 6) return setError('Enter the 6-digit code');
     setBusy(true); setError('');
-    const r = await actions.signIn(fullPhone(), code);
-    setBusy(false);
-    if (!r.ok) setError(r.error || 'Invalid code');
-    // On success, the store updates state.user and the router redirects.
+    try {
+      const r = await actions.signIn(fullPhone(), code);
+      if (!r.ok) setError(r.error || 'Invalid code');
+      // On success, the store updates state.user and the router redirects.
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -89,6 +103,7 @@ export function ScreenSignIn() {
                 fontFamily: 'var(--tm-font-mono)', fontSize: 15, color: 'var(--tm-ink)',
               }}>+880</div>
               <input value={phone} onChange={(e) => setPhone(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') requestCode(); }}
                 placeholder="1712 048 391" inputMode="tel" autoComplete="tel-national"
                 style={{
                   flex: 1, fontFamily: 'var(--tm-font-mono)', fontSize: 19, letterSpacing: '0.03em',
@@ -117,6 +132,7 @@ export function ScreenSignIn() {
               textTransform: 'uppercase', color: 'var(--tm-ink-muted)',
             }}>Verify code · {fullPhone()}</label>
             <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitCode(); }}
               placeholder="------" inputMode="numeric" autoComplete="one-time-code" autoFocus
               style={{
                 marginTop: 12, padding: '16px 18px', fontFamily: 'var(--tm-font-mono)',

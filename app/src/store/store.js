@@ -440,9 +440,11 @@ Object.assign(TmActions, {
     notify();
   },
 
-  // No-op alias for the legacy screen code (per-thread read receipts go
-  // through a future updated_at on chat_threads).
-  markChatRead() {},
+  async markChatRead(threadId) {
+    if (!threadId) return;
+    await api.markThreadRead(threadId);
+    await refreshMyData();
+  },
 
   async resetDemo() {
     await TmActions.signOut().catch(() => {});

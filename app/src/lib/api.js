@@ -68,9 +68,16 @@ export async function upsertProfile(patch) {
   const id = await meId();
   if (localMode) {
     const s = readLocal();
-    s.profiles[id] = { ...(s.profiles[id] || { id }), ...patch, updated_at: new Date().toISOString() };
+    const cur = s.profiles[id] || { id };
+    // Normalize to the same shape adaptProfile expects from Supabase: tutor
+    // and guardian sub-rows live under `tutor_profiles` / `guardian_profiles`.
+    const { tutor, guardian, ...base } = patch;
+    const next = { ...cur, ...base, updated_at: new Date().toISOString() };
+    if (tutor) next.tutor_profiles = { ...(cur.tutor_profiles || {}), ...tutor };
+    if (guardian) next.guardian_profiles = { ...(cur.guardian_profiles || {}), ...guardian };
+    s.profiles[id] = next;
     writeLocal(s);
-    return s.profiles[id];
+    return next;
   }
   const { tutor, guardian, ...base } = patch;
   const { error: e1 } = await supabase.from('profiles').upsert({ id, ...base });
@@ -277,6 +284,11 @@ export async function markClassAttended(classId) {
 }
 
 // ─── Hire flow — convenience that combines the application + class write ─
+//
+// True atomicity needs a Supabase Edge Function so the create-class and
+// update-application happen in one transaction. Until that's wired, we do
+// the writes in order with best-effort rollback: if the second fails we
+// delete the class we just created so we don't leave dangling rows.
 export async function hireApplicant(applicationId) {
   if (localMode) {
     const s = readLocal();
@@ -299,14 +311,19 @@ export async function hireApplicant(applicationId) {
     };
     s.classes.unshift(cls);
     s.applications = s.applications.map(a => a.id === applicationId ? { ...a, state: 'hired' } : a);
+    // Listing auto-closes when an application is hired (matches the SQL
+    // trigger applications_close_listing).
+    if (listing) {
+      s.listings = s.listings.map(l => l.id === listing.id ? { ...l, status: 'filled' } : l);
+    }
     writeLocal(s);
     return cls;
   }
-  // Real impl: do both writes in a transaction via an Edge Function.
   const app = await supabase.from('applications').select('*, listing:listings(*)').eq('id', applicationId).single();
   if (app.error) throw app.error;
   const a = app.data;
   const listing = a.listing;
+  if (!listing) throw new Error('Listing no longer exists');
   const cls = await createClass({
     tutor_id: a.tutor_id,
     guardian_id: listing.guardian_id,
@@ -319,7 +336,17 @@ export async function hireApplicant(applicationId) {
     pay_taka: Math.round((listing.pay_taka || 0) / 12),
     state: 'upcoming',
   });
-  await setApplicationState(applicationId, 'hired');
+  try {
+    await setApplicationState(applicationId, 'hired');
+  } catch (e) {
+    // Best-effort rollback so we don't orphan a class against an
+    // application that's still in 'shortlisted'.
+    await supabase.from('classes').delete().eq('id', cls.id);
+    throw e;
+  }
+  // Listing auto-close is also handled by the SQL trigger; doing it here
+  // too keeps the eventual-consistency hole small for clients that read
+  // before the trigger fires (in practice: same request, so a no-op).
   return cls;
 }
 
@@ -390,11 +417,43 @@ export async function findOrCreateThread({ guardian_id, tutor_id, listing_id = n
   query = listing_id === null ? query.is('listing_id', null) : query.eq('listing_id', listing_id);
   const { data: found } = await query.maybeSingle();
   if (found) return found;
+  // Race-safe insert: the partial unique indexes from migration 0004 enforce
+  // one thread per (guardian, tutor, listing) tuple, so a concurrent insert
+  // returns a unique-violation that we catch and re-query.
   const { data, error } = await supabase.from('chat_threads')
     .insert({ guardian_id, tutor_id, listing_id, last_msg_at: new Date().toISOString() })
     .select().single();
-  if (error) throw error;
-  return data;
+  if (!error) return data;
+  if (/duplicate|unique/i.test(error.message)) {
+    let q2 = supabase.from('chat_threads').select('*')
+      .eq('guardian_id', guardian_id).eq('tutor_id', tutor_id);
+    q2 = listing_id === null ? q2.is('listing_id', null) : q2.eq('listing_id', listing_id);
+    const { data: again, error: e2 } = await q2.maybeSingle();
+    if (e2) throw e2;
+    if (again) return again;
+  }
+  throw error;
+}
+
+// Mark all unread messages in a thread as read for the current user.
+// (Messages the user sent themselves are unaffected — they already "saw" them.)
+export async function markThreadRead(threadId) {
+  const me = await meId();
+  if (localMode) {
+    const s = readLocal();
+    s.messages = s.messages.map(m =>
+      m.thread_id === threadId && m.sender_id !== me && !m.read_at
+        ? { ...m, read_at: new Date().toISOString() }
+        : m
+    );
+    writeLocal(s);
+    return;
+  }
+  await supabase.from('messages')
+    .update({ read_at: new Date().toISOString() })
+    .eq('thread_id', threadId)
+    .neq('sender_id', me)
+    .is('read_at', null);
 }
 
 // ─── Student feedback (insert-only; tutor cannot SELECT — RLS enforced) ─
@@ -443,7 +502,10 @@ export async function submitVerification(tier, documentUrl) {
     // local mode just auto-approves so the demo flow continues.
     const s = readLocal();
     const me = s.profiles[tutor_id];
-    if (me && me.tutor) me.tutor.verify_tier = Math.max(me.tutor.verify_tier || 0, tier);
+    if (me) {
+      me.tutor_profiles = me.tutor_profiles || {};
+      me.tutor_profiles.verify_tier = Math.max(me.tutor_profiles.verify_tier || 0, tier);
+    }
     writeLocal(s);
     return { ...row, status: 'approved' };
   }
